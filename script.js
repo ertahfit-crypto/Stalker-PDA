@@ -1325,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', function() {
     locations.forEach(location => {
         location.addEventListener('click', function() {
             const locationName = this.dataset.location;
-            showGlitchEffect('zoneTime', `Location: ${locationName}`);
+            console.log(`Location clicked: ${locationName}`);
         });
     });
 });

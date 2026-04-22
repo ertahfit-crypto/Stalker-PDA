@@ -388,8 +388,8 @@ body {
 .zone-time {
     font-family: 'VT323', monospace;
     font-size: 24px;
-    color: var(--terminal-green);
-    text-shadow: 0 0 5px var(--terminal-green);
+    color: var(--terminal-green) !important;
+    text-shadow: 0 0 5px var(--terminal-green) !important;
     flex-shrink: 0;
     white-space: nowrap;
 }
@@ -1196,7 +1196,7 @@ body {
     box-shadow: 0 0 20px rgba(238, 130, 238, 0.8);
 }
 
-.active-location {
+.map-location-active {
     color: var(--blood-red) !important;
     text-shadow: 0 0 10px var(--blood-red) !important;
     border-color: var(--blood-red) !important;
