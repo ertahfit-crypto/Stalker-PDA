@@ -1272,11 +1272,13 @@ body {
     background: var(--gray-metal);
     border: 2px solid var(--radiation-green);
     border-radius: 10px;
-    padding: 30px;
+    padding: 20px;
+    padding-top: 40px; /* 💥 FIX: Space for close button */
     min-width: 400px;
     max-width: 500px;
     max-height: 80vh;
     overflow-y: auto;
+    position: relative;
 }
 
 .modal-header {
@@ -1287,6 +1289,7 @@ body {
     padding-bottom: 15px;
     border-bottom: 1px solid var(--radiation-green);
     position: relative;
+    padding-right: 50px; /* 💥 FIX: Space for close button */
 }
 
 .modal-header h2 {
@@ -1305,7 +1308,7 @@ body {
     background: rgba(139, 0, 0, 0.1);
     border: 1px solid var(--blood-red);
     color: var(--blood-red);
-    font-size: 24px;
+    font-size: 28px;
     cursor: pointer;
     font-family: 'VT323', monospace;
     border-radius: 50%;
@@ -1320,7 +1323,7 @@ body {
 .close-btn:hover {
     background: var(--blood-red);
     color: var(--dark-bg);
-    transform: scale(1.1);
+    transform: scale(1.2);
     box-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
 }
 
