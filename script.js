@@ -11,27 +11,32 @@ const locations = [
     {
         name: 'Припять',
         img: 'https://it-blok.com.ua/image/catalog/blog/2025/stalker2/pripyat-stalker-2-intro.jpg.pagespeed.ce.cw7HSIcBjU.jpg',
-        desc: 'Заброшенный город-призрак с высоким уровнем радиации'
+        desc: 'Заброшенный город-призрак',
+        highlight: true
     },
     {
         name: 'Кордон',
         img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTAVkHybq9y-8hjNNC0vO8yuM_YGBSTYi86w&s',
-        desc: 'Начальная зона сталкеров'
+        desc: 'Начальная зона сталкеров',
+        highlight: false
     },
     {
         name: 'Свалка',
         img: 'https://pbs.twimg.com/media/FvSWgT1X0AAFjyN.jpg',
-        desc: 'Территория металлолома и бандитов'
+        desc: 'Территория металлолома и бандитов',
+        highlight: false
     },
     {
         name: 'Агропром',
         img: 'https://i.ytimg.com/vi/USTs82H1MAA/sddefault.jpg',
-        desc: 'Научный комплекс с лабораториями'
+        desc: 'Научный комплекс с лабораториями',
+        highlight: false
     },
     {
         name: 'Темная долина',
-        img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRILqZPN9IPdqcWRgHnibkN0KL3erUY119SzQ&s',
-        desc: 'Опасная зона с аномалиями и мутантами'
+        img: 'https://preview.redd.it/the-dark-valley-ogsr-minimum-settings-static-lighting-v0-yfagfwzxi0k61.jpg',
+        desc: 'Опасная зона с аномалиями',
+        highlight: false
     }
 ];
 
@@ -162,6 +167,9 @@ function initializeApp() {
     
     // Initialize traders
     loadTraders();
+    
+    // Initialize location highlights
+    highlightLocations();
 }
 
 // Save all users data to localStorage
@@ -1111,6 +1119,20 @@ function openModal(loc) {
 
 function hideLocationModal() {
     document.getElementById('locationModal').classList.add('hidden');
+}
+
+// Highlight locations based on data
+function highlightLocations() {
+    document.querySelectorAll('[data-location]').forEach(el => {
+        const name = el.dataset.location;
+        const loc = locations.find(l => l.name === name);
+        
+        if (loc?.highlight) {
+            el.classList.add('active-location');
+        } else {
+            el.classList.remove('active-location');
+        }
+    });
 }
 
 // Location click handler
