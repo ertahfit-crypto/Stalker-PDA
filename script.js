@@ -418,7 +418,8 @@ function sendVoiceMessage() {
         content: '[VOICE MESSAGE]',
         timestamp: new Date().toISOString(),
         level: currentUser.level,
-        isVoice: true
+        isVoice: true,
+        avatar: currentUser.avatar
     };
     
     messages.push(voiceData);
@@ -427,6 +428,38 @@ function sendVoiceMessage() {
     
     // Simulate voice processing
     showGlitchEffect('voiceBtn', 'Голос передан...');
+}
+
+function playVoiceMessage(messageId) {
+    const voiceElement = document.getElementById(`voice-${messageId}`);
+    const playBtn = voiceElement.querySelector('.voice-play-btn');
+    const isPlaying = voiceElement.classList.contains('playing');
+    
+    if (isPlaying) {
+        // Stop playing
+        voiceElement.classList.remove('playing');
+        playBtn.textContent = '▶️';
+    } else {
+        // Start playing
+        voiceElement.classList.add('playing');
+        playBtn.textContent = '⏸️';
+        
+        // Simulate playback progress
+        const progressBar = voiceElement.querySelector('.voice-progress-bar');
+        let progress = 0;
+        
+        const interval = setInterval(() => {
+            progress += 2;
+            progressBar.style.width = `${progress}%`;
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                voiceElement.classList.remove('playing');
+                playBtn.textContent = '▶️';
+                progressBar.style.width = '0%';
+            }
+        }, 60);
+    }
 }
 
 function simulateResponse() {
@@ -460,29 +493,62 @@ function displayMessage(messageData) {
     const messagesContainer = document.getElementById('chatMessages');
     
     const messageElement = document.createElement('div');
-    messageElement.className = 'user-message';
-    messageElement.dataset.messageId = messageData.id;
     
-    const time = new Date(messageData.timestamp).toLocaleTimeString('ru-RU', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-    });
-    
-    const deleteButton = messageData.author === currentUser.username ? 
-        `<div class="message-actions">
-            <button class="message-delete" onclick="deleteMessage(${messageData.id})">Удалить</button>
-        </div>` : '';
-    
-    messageElement.innerHTML = `
-        <div class="message-header">
-            <div class="message-info">
-                <span class="message-author level-${messageData.level}">${messageData.author}</span>
-                <span class="message-time">${time}</span>
-            </div>
-            ${deleteButton}
-        </div>
-        <div class="message-content">${messageData.content}</div>
-    `;
+    // Determine message type and apply appropriate class
+    if (messageData.author === 'SYSTEM') {
+        messageElement.className = 'system-message';
+        messageElement.innerHTML = `<div class="system-text">${messageData.content}</div>`;
+    } else {
+        const isOwn = messageData.author === currentUser.username;
+        messageElement.className = `user-message ${isOwn ? 'own-message' : 'other-message'}`;
+        messageElement.dataset.messageId = messageData.id;
+        
+        const time = new Date(messageData.timestamp).toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
+        const deleteButton = isOwn ? 
+            `<div class="message-actions">
+                <button class="message-delete" onclick="deleteMessage(${messageData.id})">Удалить</button>
+            </div>` : '';
+        
+        const avatarUrl = messageData.avatar || `https://picsum.photos/seed/${messageData.author}/30/30.jpg`;
+        
+        if (messageData.isVoice) {
+            messageElement.innerHTML = `
+                <div class="message-header">
+                    <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar">
+                    <div class="message-info">
+                        <span class="message-author level-${messageData.level}">${messageData.author}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+                    ${deleteButton}
+                </div>
+                <div class="voice-message" id="voice-${messageData.id}">
+                    <div class="voice-player">
+                        <button class="voice-play-btn" onclick="playVoiceMessage(${messageData.id})">▶️</button>
+                        <div class="voice-waveform">
+                            ${Array(20).fill('').map(() => '<div class="voice-wave-bar"></div>').join('')}
+                        </div>
+                        <div class="voice-duration">0:03</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            messageElement.innerHTML = `
+                <div class="message-header">
+                    <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar">
+                    <div class="message-info">
+                        <span class="message-author level-${messageData.level}">${messageData.author}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+                    ${deleteButton}
+                </div>
+                <div class="message-content">${messageData.content}</div>
+            `;
+        }
+    }
     
     messagesContainer.appendChild(messageElement);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
