@@ -1330,3 +1330,75 @@ function updateArtifactCounter() {
 
 // Update artifacts periodically
 setInterval(updateArtifactCounter, 10000);
+// --- КАСКАД: МОДУЛЬ ОНЛАЙН-СВЯЗИ (ФИНАЛ) ---
+
+// 0. Отключаем старые локальные функции, чтобы не было конфликтов
+window.loadMessages = function() { console.log("📡 Переключено на онлайн-эфир..."); };
+window.loadReports = function() { console.log("📊 Отчеты в спящем режиме..."); };
+
+// 1. Улучшенная отправка (сначала стирает, потом шлет)
+window.sendMessage = async function() {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+
+    const message = input.value.trim();
+    if (!message || !window.dbFunctions) return;
+
+    const { collection, addDoc } = window.dbFunctions;
+
+    // МГНОВЕННАЯ ОЧИСТКА (чтобы текст не залипал на телефоне)
+    input.value = '';
+
+    try {
+        await addDoc(collection(window.db, 'messages'), {
+            author: (window.currentUser && window.currentUser.username) ? window.currentUser.username : "Сталкер",
+            content: message,
+            timestamp: Date.now(),
+            level: (window.currentUser && window.currentUser.level) ? window.currentUser.level : 'newcomer'
+        });
+        console.log("✅ Сообщение в базе");
+    } catch (e) {
+        console.error("❌ Ошибка ПДА:", e);
+        input.value = message; // Возвращаем текст, если не ушло
+        if (typeof showGlitchEffect === 'function') {
+            showGlitchEffect('sendBtn', 'ОШИБКА СЕТИ');
+        }
+    }
+};
+
+// 2. Живая синхронизация
+function startChatSync() {
+    if (!window.dbFunctions) {
+        console.log("📻 Поиск сигнала базы...");
+        setTimeout(startChatSync, 1000);
+        return;
+    }
+
+    const { collection, onSnapshot, query, orderBy, limit } = window.dbFunctions;
+    const q = query(collection(window.db, 'messages'), orderBy('timestamp', 'desc'), limit(50));
+
+    // Слушаем базу
+    onSnapshot(q, (snapshot) => {
+        const messagesContainer = document.getElementById('chatMessages');
+        if (!messagesContainer) return;
+
+        messagesContainer.innerHTML = '<div class="system-message"><span class="system-text">SYSTEM: Сеть стабильна...</span></div>';
+
+        const onlineMessages = [];
+        snapshot.forEach(doc => onlineMessages.push(doc.data()));
+
+        onlineMessages.reverse().forEach(msg => {
+            if (typeof displayMessage === 'function') {
+                displayMessage(msg);
+            }
+        });
+    }, (error) => {
+        // Если видишь эту ошибку в консоли — значит, Rules в Firebase не сработали
+        console.error("📡 Ошибка связи (проверь Rules в Firebase):", error);
+    });
+}
+
+// Поехали!
+startChatSync();
+// --- КОНЕЦ МОДУЛЯ ---
+
