@@ -141,6 +141,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize Application
 function initializeApp() {
+    // Load users from localStorage
+    loadUsersFromStorage();
+    
     // Check if user is logged in
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
@@ -158,6 +161,59 @@ function initializeApp() {
     
     // Initialize traders
     loadTraders();
+}
+
+// Load users from localStorage
+function loadUsersFromStorage() {
+    const savedUsers = localStorage.getItem('users');
+    if (savedUsers) {
+        Object.assign(users, JSON.parse(savedUsers));
+    }
+}
+
+// Save users to localStorage
+function saveUsersToStorage() {
+    localStorage.setItem('users', JSON.stringify(users));
+}
+
+// Update UI with current user data
+function updateUI() {
+    if (!currentUser) return;
+    
+    const userId = currentUser.username.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const user = users[userId];
+    
+    if (!user) return;
+    
+    // Update all avatars for current user
+    document.querySelectorAll('.message-avatar[data-user="' + userId + '"]').forEach(img => {
+        img.src = user.avatar;
+    });
+    
+    // Update profile avatar if open
+    const profileAvatar = document.getElementById('largeAvatar');
+    if (profileAvatar) {
+        profileAvatar.src = user.avatar;
+    }
+    
+    // Update user profile modal if open
+    const userProfileAvatar = document.getElementById('userProfileAvatar');
+    if (userProfileAvatar && userProfileAvatar.dataset.user === userId) {
+        userProfileAvatar.src = user.avatar;
+        userProfileAvatar.dataset.user = userId;
+        
+        // Update message count in profile
+        const messageCount = document.getElementById('userProfileMessages');
+        if (messageCount) {
+            messageCount.textContent = user.messages || 0;
+        }
+        
+        // Update reputation
+        const reputation = document.getElementById('userProfileReputation');
+        if (reputation) {
+            reputation.textContent = user.reputation || 0;
+        }
+    }
 }
 
 // Setup Event Listeners
@@ -456,18 +512,40 @@ function sendMessage() {
     
     if (!message) return;
     
+    // Increment user message counter
+    const userId = currentUser.username.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!users[userId]) {
+        users[userId] = {
+            name: currentUser.username,
+            avatar: currentUser.avatar,
+            rank: currentUser.level || 'Новичок',
+            status: 'онлайн',
+            bio: currentUser.description || '',
+            messages: 0,
+            reputation: 0
+        };
+    }
+    users[userId].messages = (users[userId].messages || 0) + 1;
+    
+    // Save users data
+    saveUsersToStorage();
+    
     const messageData = {
         id: Date.now(),
         author: currentUser.username,
         content: message,
         timestamp: new Date().toISOString(),
-        level: currentUser.level
+        level: currentUser.level,
+        avatar: users[userId].avatar
     };
     
     messages.push(messageData);
     saveMessages();
     displayMessage(messageData);
     input.value = '';
+    
+    // Update UI with new message count
+    updateUI();
     
     // Simulate response
     setTimeout(() => {
@@ -789,9 +867,36 @@ function handleAvatarChange(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         const result = e.target.result;
+        
+        // Update preview
         document.getElementById('largeAvatar').src = result;
         
-        // Store for saving
+        // Save to users object
+        const userId = currentUser.username.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!users[userId]) {
+            users[userId] = {
+                name: currentUser.username,
+                avatar: result,
+                rank: currentUser.level || 'Новичок',
+                status: 'онлайн',
+                bio: currentUser.description || '',
+                messages: 0,
+                reputation: 0
+            };
+        } else {
+            users[userId].avatar = result;
+        }
+        
+        // Save to localStorage
+        saveUsersToStorage();
+        
+        // Update UI immediately
+        updateUI();
+        
+        // Show success message
+        showSuccessMessage('Аватар обновлён!');
+        
+        // Store for profile save
         currentUser.tempAvatar = result;
     };
     reader.onerror = function() {
