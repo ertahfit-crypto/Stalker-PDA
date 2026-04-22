@@ -6,6 +6,82 @@ let messages = [];
 let reports = [];
 let currentSection = 'chat';
 
+// Data structures
+const locations = [
+    {
+        id: 'cordon',
+        name: 'Кордон',
+        image: 'https://picsum.photos/seed/cordon-stalker/800/400.jpg',
+        description: 'Кордон - это внешняя территория Zone. Здесь начинаются новички и находят убежище опытные сталкеры. Относительно безопасная зона с базой Сидоровича.'
+    },
+    {
+        id: 'garbage',
+        name: 'Свалка',
+        image: 'https://picsum.photos/seed/garbage-stalker/800/400.jpg',
+        description: 'Свалка - опасная территория, полная аномалий и мутантов. Здесь можно найти ценные артефакты, но риск очень высок.'
+    },
+    {
+        id: 'agroprom',
+        name: 'Агропром',
+        image: 'https://picsum.photos/seed/agroprom-stalker/800/400.jpg',
+        description: 'Агропромный исследовательский институт - таинственное место с подземными лабораториями. Множество секретов и опасностей.'
+    },
+    {
+        id: 'pripyat',
+        name: 'Припять',
+        image: 'https://picsum.photos/seed/pripyat-stalker/800/400.jpg',
+        description: 'Припять - мёртвый город near Чернобыльской АЭС. Самая опасная зона с высокой радиацией и монстрами. Но и награда здесь наибольшая.'
+    }
+];
+
+const traders = [
+    {
+        id: 'sidorovich',
+        name: 'Сидорович',
+        avatar: 'СИД',
+        description: '«Хороший товар, хорошая цена...»',
+        specialty: 'Базовые товары',
+        inventory: [
+            { name: 'Патроны 5.45', price: '50₽', icon: '🔫', description: 'Стандартные патроны' },
+            { name: 'Аптечка', price: '150₽', icon: '💊', description: 'Лечит ранения' },
+            { name: 'Хлеб', price: '20₽', icon: '🍞', description: 'Базовая еда' },
+            { name: 'Водка', price: '100₽', icon: '🍺', description: 'Снимает радиацию' },
+            { name: 'Бинт', price: '30₽', icon: '🩹', description: 'Первая помощь' },
+            { name: 'Нож', price: '200₽', icon: '🔪', description: 'Ближний бой' }
+        ]
+    },
+    {
+        id: 'barman',
+        name: 'Бармен',
+        avatar: 'БАР',
+        description: '«Добро пожаловать в Бар, сталкер!»',
+        specialty: 'Уникальные товары',
+        inventory: [
+            { name: 'Артефакт «Янтарь»', price: '2000₽', icon: '💎', description: 'Снижает радиацию' },
+            { name: 'Экзоскелет', price: '50000₽', icon: '🦾', description: 'Лучшая защита' },
+            { name: 'Винтовка «Гром»', price: '8000₽', icon: '🔫', description: 'Мощное оружие' },
+            { name: 'Детектор «Велес»', price: '3000₽', icon: '📡', description: 'Находит артефакты' },
+            { name: 'Костюм «Страж Свободы»', price: '15000₽', icon: '🥋', description: 'Защита от аномалий' },
+            { name: 'Энергетик', price: '80₽', icon: '⚡', description: 'Восстанавливает выносливость' }
+        ]
+    },
+    {
+        id: 'petrenko',
+        name: 'Петренко',
+        avatar: 'ПЕТ',
+        description: '«Военное снаряжение по лучшим ценам»',
+        specialty: 'Военные товары',
+        inventory: [
+            { name: 'Бронежилет «Военный»', price: '12000₽', icon: '🦺', description: 'Отличная защита' },
+            { name: 'Шлем «Берилл»', price: '3000₽', icon: '⛑️', description: 'Защита головы' },
+            { name: 'Патроны 7.62', price: '80₽', icon: '🔫', description: 'Снайперские патроны' },
+            { name: 'Гранаты Ф-1', price: '300₽', icon: '💣', description: 'Фрагментационные' },
+            { name: 'ПНВ', price: '5000₽', icon: '👁️', description: 'Ночное видение' },
+            { name: 'Компас', price: '500₽', icon: '🧭', description: 'Навигация' }
+        ]
+    }
+];
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -30,6 +106,9 @@ function initializeApp() {
     
     // Simulate radiation fluctuations
     setInterval(updateRadiation, 3000);
+    
+    // Initialize traders
+    loadTraders();
 }
 
 // Setup Event Listeners
@@ -66,6 +145,23 @@ function setupEventListeners() {
     document.getElementById('closeReport').addEventListener('click', hideReportModal);
     document.getElementById('saveReport').addEventListener('click', saveReport);
     document.getElementById('reportImageFile').addEventListener('change', handleReportImageChange);
+    
+    // Map Events
+    document.querySelectorAll('.map-location').forEach(location => {
+        location.addEventListener('click', () => showLocationModal(location.dataset.location));
+    });
+    
+    // Location Modal Events
+    document.getElementById('closeLocation').addEventListener('click', hideLocationModal);
+    document.getElementById('locationModal').addEventListener('click', (e) => {
+        if (e.target.id === 'locationModal') hideLocationModal();
+    });
+    
+    // Trader Modal Events
+    document.getElementById('closeTrader').addEventListener('click', hideTraderModal);
+    document.getElementById('traderModal').addEventListener('click', (e) => {
+        if (e.target.id === 'traderModal') hideTraderModal();
+    });
     
     // Enter key for forms
     document.querySelectorAll('.pda-input').forEach(input => {
@@ -570,6 +666,79 @@ function handleReportImageChange(event) {
         reportImageData = null;
     };
     reader.readAsDataURL(file);
+}
+
+// Location Modal Functions
+function showLocationModal(locationId) {
+    const location = locations.find(loc => loc.id === locationId);
+    if (!location) return;
+    
+    document.getElementById('locationTitle').textContent = location.name;
+    document.getElementById('locationImage').src = location.image;
+    document.getElementById('locationDescription').textContent = location.description;
+    
+    // Handle image loading error
+    const locationImage = document.getElementById('locationImage');
+    locationImage.onerror = function() {
+        this.src = `https://picsum.photos/seed/${locationId}-fallback/800/400.jpg`;
+    };
+    
+    document.getElementById('locationModal').classList.remove('hidden');
+}
+
+function hideLocationModal() {
+    document.getElementById('locationModal').classList.add('hidden');
+}
+
+// Trader Functions
+function loadTraders() {
+    const tradersContainer = document.getElementById('tradersContainer');
+    tradersContainer.innerHTML = '';
+    
+    traders.forEach(trader => {
+        const traderCard = document.createElement('div');
+        traderCard.className = 'trader-card';
+        traderCard.innerHTML = `
+            <div class="trader-avatar">${trader.avatar}</div>
+            <div class="trader-info">
+                <h3>${trader.name}</h3>
+                <p>"${trader.description}"</p>
+                <div class="trader-specialty">${trader.specialty}</div>
+                <div class="trader-action">
+                    <button class="open-trader-btn" onclick="showTraderModal('${trader.id}')">Открыть</button>
+                </div>
+            </div>
+        `;
+        tradersContainer.appendChild(traderCard);
+    });
+}
+
+function showTraderModal(traderId) {
+    const trader = traders.find(t => t.id === traderId);
+    if (!trader) return;
+    
+    document.getElementById('traderTitle').textContent = `Ассортимент: ${trader.name}`;
+    
+    const traderItems = document.getElementById('traderItems');
+    traderItems.innerHTML = '';
+    
+    trader.inventory.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'trader-item';
+        itemElement.innerHTML = `
+            <div class="trader-item-icon">${item.icon}</div>
+            <div class="trader-item-name">${item.name}</div>
+            <div class="trader-item-price">${item.price}</div>
+            <div class="trader-item-description">${item.description}</div>
+        `;
+        traderItems.appendChild(itemElement);
+    });
+    
+    document.getElementById('traderModal').classList.remove('hidden');
+}
+
+function hideTraderModal() {
+    document.getElementById('traderModal').classList.add('hidden');
 }
 
 // Utility Functions

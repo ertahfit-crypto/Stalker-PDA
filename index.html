@@ -177,16 +177,16 @@
                 </div>
                 <div class="map-container">
                     <div class="zone-map">
-                        <div class="map-location" style="top: 30%; left: 50%;" data-location="Cordon">
+                        <div class="map-location" style="top: 30%; left: 50%;" data-location="cordon">
                             <span>Кордон</span>
                         </div>
-                        <div class="map-location" style="top: 50%; left: 30%;" data-location="Garbage">
+                        <div class="map-location" style="top: 50%; left: 30%;" data-location="garbage">
                             <span>Свалка</span>
                         </div>
-                        <div class="map-location" style="top: 70%; left: 60%;" data-location="Agroprom">
+                        <div class="map-location" style="top: 70%; left: 60%;" data-location="agroprom">
                             <span>Агропром</span>
                         </div>
-                        <div class="map-location danger" style="top: 40%; left: 70%;" data-location="Pripyat">
+                        <div class="map-location danger" style="top: 40%; left: 70%;" data-location="pripyat">
                             <span>Припять</span>
                         </div>
                     </div>
@@ -198,21 +198,8 @@
                 <div class="section-header">
                     <h2 class="section-title">Торговцы</h2>
                 </div>
-                <div class="traders-container">
-                    <div class="trader-card">
-                        <div class="trader-avatar">СИД</div>
-                        <div class="trader-info">
-                            <h3>Сидорович</h3>
-                            <p>"Хороший товар, хорошая цена..."</p>
-                        </div>
-                    </div>
-                    <div class="trader-card">
-                        <div class="trader-avatar">БАР</div>
-                        <div class="trader-info">
-                            <h3>Бармен</h3>
-                            <p>"Добро пожаловать в Бар, сталкер!"</p>
-                        </div>
-                    </div>
+                <div class="traders-container" id="tradersContainer">
+                    <!-- Traders will be dynamically added here -->
                 </div>
             </section>
         </main>
@@ -276,6 +263,41 @@
                     <div id="imagePreview" class="image-preview"></div>
                 </div>
                 <button class="save-profile-btn" id="saveReport">Отправить отчёт</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Location Modal -->
+    <div id="locationModal" class="modal hidden">
+        <div class="modal-content location-modal-content">
+            <div class="modal-header">
+                <h2 id="locationTitle">Локация</h2>
+                <button class="close-btn" id="closeLocation">X</button>
+            </div>
+            <div class="modal-body">
+                <div class="location-image-container">
+                    <img id="locationImage" src="" alt="Location" class="location-image">
+                </div>
+                <div class="location-info">
+                    <p id="locationDescription">Описание локации...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trader Inventory Modal -->
+    <div id="traderModal" class="modal hidden">
+        <div class="modal-content trader-modal-content">
+            <div class="modal-header">
+                <h2 id="traderTitle">Ассортимент торговца</h2>
+                <button class="close-btn" id="closeTrader">X</button>
+            </div>
+            <div class="modal-body">
+                <div class="trader-inventory">
+                    <div id="traderItems" class="trader-items">
+                        <!-- Items will be dynamically added here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
