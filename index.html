@@ -341,9 +341,28 @@
             </div>
         </div>
     </div>
+
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="delete-confirm-modal hidden">
+        <div class="delete-confirm-overlay"></div>
+        <div class="delete-confirm-container">
+            <div class="delete-confirm-header">
+                <h3>⚠️ СИСТЕМА ПДА</h3>
+            </div>
+            <div class="delete-confirm-body">
+                <p class="delete-confirm-message">УДАЛИТЬ ЗАПИСЬ ИЗ ЭФИРА?</p>
+                <p class="delete-confirm-warning">Это действие необратимо и удалит сообщение для всех сталкеров.</p>
+            </div>
+            <div class="delete-confirm-actions">
+                <button id="confirmDeleteBtn" class="pda-btn pda-btn-danger">ПОДТВЕРДИТЬ</button>
+                <button id="cancelDeleteBtn" class="pda-btn pda-btn-secondary">ОТМЕНА</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-      import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+      import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
       const firebaseConfig = {
         apiKey: "AIzaSyBVsfUacq4wrYmPV-KhA1_NhGx1h9e9GQ",
@@ -360,7 +379,7 @@
 
       // Прокидываем функции в глобальное окно
       window.db = db;
-      window.dbFunctions = { collection, addDoc, onSnapshot, query, orderBy, limit };
+      window.dbFunctions = { collection, addDoc, onSnapshot, query, orderBy, limit, doc, deleteDoc };
 
       console.log("📡 Связь с сетью установлена!");
     </script>

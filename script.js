@@ -648,46 +648,29 @@ function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
 
-    if (!message) return;
+    if (!message || !window.dbFunctions) return;
 
-    // Increment user message counter
-    const userId = currentUser.username.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (!users[userId]) {
-        users[userId] = {
-            name: currentUser.username,
-            avatar: currentUser.avatar,
-            rank: currentUser.level || 'Новичок',
-            status: 'онлайн',
-            bio: currentUser.description || '',
-            messages: 0,
-            reputation: 0
-        };
-    }
-    users[userId].messages = (users[userId].messages || 0) + 1;
-
-    // Save users data
-    saveUsers();
-
-    const messageData = {
-        id: Date.now(),
-        author: currentUser.username,
-        content: message,
-        timestamp: new Date().toISOString(),
-        level: currentUser.level
-    };
-
-    messages.push(messageData);
-    saveMessages();
-    displayMessage(messageData);
+    // Clear input immediately for responsive UI
     input.value = '';
 
-    // Update UI with new message count
-    renderMessages();
+    const { collection, addDoc } = window.dbFunctions;
 
-    // Simulate response
-    setTimeout(() => {
-        simulateResponse();
-    }, 2000 + Math.random() * 3000);
+    try {
+        addDoc(collection(window.db, 'messages'), {
+            author: (window.currentUser && window.currentUser.username) ? window.currentUser.username : "Сталкер",
+            content: message,
+            timestamp: Date.now(),
+            level: (window.currentUser && window.currentUser.level) ? window.currentUser.level : 'newcomer',
+            avatar: (window.currentUser && window.currentUser.avatar) ? window.currentUser.avatar : null
+        });
+        console.log("✅ Сообщение в базе");
+    } catch (e) {
+        console.error("❌ Ошибка ПДА:", e);
+        input.value = message; // Restore text if failed
+        if (typeof showGlitchEffect === 'function') {
+            showGlitchEffect('sendBtn', 'ОШИБКА СЕТИ');
+        }
+    }
 }
 
 function sendVoiceMessage() {
@@ -786,15 +769,13 @@ function displayMessage(messageData) {
             minute: '2-digit'
         });
 
-        const deleteButton = isOwn ?
-            `<div class="message-actions">
-                <button class="message-delete" onclick="deleteMessage(${messageData.id})">Удалить</button>
-            </div>` : '';
+        const deleteButton = isOwn && messageData.id ?
+            `<span class="delete-btn" onclick="deleteMessage('${messageData.id}')" style="color:red; cursor:pointer; margin-left:10px;">[X]</span>` : '';
+
+        const avatarUrl = messageData.avatar || `https://picsum.photos/seed/${messageData.author}/30/30.jpg`;
 
         const userId = messageData.author.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const user = users[userId];
-        const avatarUrl = (user && user.avatar) || messageData.avatar || `https://picsum.photos/seed/${messageData.author}/30/30.jpg`;
-
+        
         if (messageData.isVoice) {
             messageElement.innerHTML = `
                 <div class="message-header">
@@ -822,8 +803,8 @@ function displayMessage(messageData) {
                     <div class="message-info">
                         <span class="message-author level-${messageData.level} clickable-user" data-user="${userId}">${messageData.author}</span>
                         <span class="message-time">${time}</span>
+                        ${deleteButton}
                     </div>
-                    ${deleteButton}
                 </div>
                 <div class="message-content">${messageData.content}</div>
             `;
@@ -845,8 +826,7 @@ function saveMessages() {
 }
 
 function loadMessages() {
-    messages = JSON.parse(localStorage.getItem('messages') || '[]');
-    renderMessages();
+    console.log('📡 Переключено на онлайн-эфир...');
 }
 
 function renderMessages() {
@@ -978,11 +958,7 @@ function saveReports() {
 }
 
 function loadReports() {
-    reports = JSON.parse(localStorage.getItem('reports') || '[]');
-    const reportsGrid = document.getElementById('reportsGrid');
-    reportsGrid.innerHTML = '';
-
-    reports.forEach(report => displayReport(report));
+    console.log('📊 Отчеты в спящем режиме...');
 }
 
 // File Handling Functions
@@ -1385,7 +1361,7 @@ function startChatSync() {
         messagesContainer.innerHTML = '<div class="system-message"><span class="system-text">SYSTEM: Сеть стабильна...</span></div>';
 
         const onlineMessages = [];
-        snapshot.forEach(doc => onlineMessages.push(doc.data()));
+        snapshot.forEach(doc => onlineMessages.push({ id: doc.id, ...doc.data() }));
 
         onlineMessages.reverse().forEach(msg => {
             if (typeof displayMessage === 'function') {
@@ -1400,5 +1376,77 @@ function startChatSync() {
 
 // Поехали!
 startChatSync();
+// 3. Удаление сообщений
+let pendingDeleteId = null;
+
+window.deleteMessage = async function(messageId) {
+    if (!window.dbFunctions) {
+        console.error('📡 Firebase не доступен');
+        return;
+    }
+
+    // Store the message ID and show custom modal
+    pendingDeleteId = messageId;
+    showDeleteConfirmModal();
+};
+
+// Modal functions
+function showDeleteConfirmModal() {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        
+        // Add event listeners for buttons
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        const cancelBtn = document.getElementById('cancelDeleteBtn');
+        
+        // Remove existing listeners to prevent duplicates
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Add fresh listeners
+        newConfirmBtn.addEventListener('click', confirmDeleteMessage);
+        newCancelBtn.addEventListener('click', hideDeleteConfirmModal);
+        
+        // Also close on overlay click
+        const overlay = modal.querySelector('.delete-confirm-overlay');
+        overlay.addEventListener('click', hideDeleteConfirmModal);
+    }
+}
+
+function hideDeleteConfirmModal() {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        pendingDeleteId = null;
+    }
+}
+
+async function confirmDeleteMessage() {
+    if (!pendingDeleteId || !window.dbFunctions) {
+        hideDeleteConfirmModal();
+        return;
+    }
+
+    try {
+        const { doc, deleteDoc } = window.dbFunctions;
+        await deleteDoc(doc(window.db, 'messages', pendingDeleteId));
+        console.log('✅ Сообщение удалено из базы');
+        
+        // Show success feedback
+        if (typeof showGlitchEffect === 'function') {
+            showGlitchEffect('sendBtn', 'УДАЛЕНО');
+        }
+    } catch (error) {
+        console.error('❌ Ошибка удаления:', error);
+        if (typeof showGlitchEffect === 'function') {
+            showGlitchEffect('sendBtn', 'ОШИБКА УДАЛЕНИЯ');
+        }
+    }
+    
+    hideDeleteConfirmModal();
+}
 // --- КОНЕЦ МОДУЛЯ ---
 
