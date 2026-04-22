@@ -302,6 +302,43 @@
         </div>
     </div>
     
+    <!-- User Profile Modal -->
+    <div id="userProfileModal" class="modal hidden">
+        <div class="modal-content user-profile-modal-content">
+            <div class="modal-header">
+                <h2 id="userProfileTitle">Профиль сталкера</h2>
+                <button class="close-btn" id="closeUserProfile">X</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-profile-content">
+                    <div class="user-profile-avatar">
+                        <img id="userProfileAvatar" src="" alt="User Avatar" class="user-profile-large-avatar">
+                    </div>
+                    <div class="user-profile-info">
+                        <h3 id="userProfileName" class="user-profile-name">Имя</h3>
+                        <div class="user-profile-rank">
+                            <span id="userProfileRank" class="rank-badge">Ранг</span>
+                            <span id="userProfileStatus" class="status-indicator">Статус</span>
+                        </div>
+                        <div class="user-profile-bio">
+                            <p id="userProfileBio">Описание...</p>
+                        </div>
+                        <div class="user-profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Сообщения:</span>
+                                <span id="userProfileMessages" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Репутация:</span>
+                                <span id="userProfileReputation" class="stat-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

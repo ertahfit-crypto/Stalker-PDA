@@ -82,6 +82,55 @@ const traders = [
     }
 ];
 
+// User data
+const users = {
+    erik: {
+        name: 'ERIK',
+        avatar: 'https://picsum.photos/seed/erik-stalker/100/100.jpg',
+        rank: 'Сталкер',
+        status: 'онлайн',
+        bio: 'Опытный исследователь зоны. Знаю все тайные тропы.',
+        messages: 42,
+        reputation: 150
+    },
+    fanatic: {
+        name: 'FANATIC',
+        avatar: 'https://picsum.photos/seed/fanatic-stalker/100/100.jpg',
+        rank: 'Новичок',
+        status: 'оффлайн',
+        bio: 'Ищу напарников для вылазки. Есть артефакты на обмен.',
+        messages: 15,
+        reputation: 25
+    },
+    ghost: {
+        name: 'GHOST',
+        avatar: 'https://picsum.photos/seed/ghost-stalker/100/100.jpg',
+        rank: 'Ветеран',
+        status: 'онлайн',
+        bio: 'Бывалый сталкер. Много раз ходил в центр зоны.',
+        messages: 89,
+        reputation: 320
+    },
+    strelok: {
+        name: 'СТРЕЛОК',
+        avatar: 'https://picsum.photos/seed/strelok-stalker/100/100.jpg',
+        rank: 'Легенда',
+        status: 'онлайн',
+        bio: 'Легендарный сталкер. Спас Zone не один раз.',
+        messages: 156,
+        reputation: 500
+    },
+    wanderer: {
+        name: 'WANDERER',
+        avatar: 'https://picsum.photos/seed/wanderer-stalker/100/100.jpg',
+        rank: 'Сталкер',
+        status: 'оффлайн',
+        bio: 'Вечный странник. Ищу артефакты в забытых местах.',
+        messages: 67,
+        reputation: 180
+    }
+};
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
@@ -161,6 +210,21 @@ function setupEventListeners() {
     document.getElementById('closeTrader').addEventListener('click', hideTraderModal);
     document.getElementById('traderModal').addEventListener('click', (e) => {
         if (e.target.id === 'traderModal') hideTraderModal();
+    });
+    
+    // User Profile Modal Events
+    document.getElementById('closeUserProfile').addEventListener('click', hideUserProfileModal);
+    document.getElementById('userProfileModal').addEventListener('click', (e) => {
+        if (e.target.id === 'userProfileModal') hideUserProfileModal();
+    });
+    
+    // User click events (delegated)
+    document.addEventListener('click', (e) => {
+        const userElement = e.target.closest('.clickable-user');
+        if (userElement) {
+            const userId = userElement.dataset.user;
+            openUserProfile(userId);
+        }
     });
     
     // Enter key for forms
@@ -514,13 +578,14 @@ function displayMessage(messageData) {
             </div>` : '';
         
         const avatarUrl = messageData.avatar || `https://picsum.photos/seed/${messageData.author}/30/30.jpg`;
+        const userId = messageData.author.toLowerCase().replace(/[^a-z0-9]/g, '');
         
         if (messageData.isVoice) {
             messageElement.innerHTML = `
                 <div class="message-header">
-                    <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar">
+                    <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar clickable-user" data-user="${userId}">
                     <div class="message-info">
-                        <span class="message-author level-${messageData.level}">${messageData.author}</span>
+                        <span class="message-author level-${messageData.level} clickable-user" data-user="${userId}">${messageData.author}</span>
                         <span class="message-time">${time}</span>
                     </div>
                     ${deleteButton}
@@ -538,9 +603,9 @@ function displayMessage(messageData) {
         } else {
             messageElement.innerHTML = `
                 <div class="message-header">
-                    <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar">
+                    <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar clickable-user" data-user="${userId}">
                     <div class="message-info">
-                        <span class="message-author level-${messageData.level}">${messageData.author}</span>
+                        <span class="message-author level-${messageData.level} clickable-user" data-user="${userId}">${messageData.author}</span>
                         <span class="message-time">${time}</span>
                     </div>
                     ${deleteButton}
@@ -850,6 +915,65 @@ function showTraderModal(traderId) {
 
 function hideTraderModal() {
     document.getElementById('traderModal').classList.add('hidden');
+}
+
+// User Profile Functions
+function openUserProfile(userId) {
+    const user = users[userId];
+    if (!user) {
+        showUserProfileError('Данные не найдены');
+        return;
+    }
+    
+    // Fill modal with user data
+    document.getElementById('userProfileTitle').textContent = `Профиль: ${user.name}`;
+    document.getElementById('userProfileAvatar').src = user.avatar;
+    document.getElementById('userProfileName').textContent = user.name;
+    document.getElementById('userProfileRank').textContent = user.rank;
+    document.getElementById('userProfileStatus').textContent = user.status;
+    document.getElementById('userProfileBio').textContent = user.bio;
+    document.getElementById('userProfileMessages').textContent = user.messages;
+    document.getElementById('userProfileReputation').textContent = user.reputation;
+    
+    // Set status color
+    const statusElement = document.getElementById('userProfileStatus');
+    statusElement.className = user.status === 'онлайн' ? 'status-indicator online' : 'status-indicator offline';
+    
+    // Set rank color
+    const rankElement = document.getElementById('userProfileRank');
+    const rankColors = {
+        'Новичок': 'level-newcomer',
+        'Сталкер': 'level-stalker',
+        'Ветеран': 'level-veteran',
+        'Легенда': 'level-legend'
+    };
+    rankElement.className = `rank-badge ${rankColors[user.rank] || 'level-stalker'}`;
+    
+    // Show modal
+    document.getElementById('userProfileModal').classList.remove('hidden');
+}
+
+function hideUserProfileModal() {
+    document.getElementById('userProfileModal').classList.add('hidden');
+}
+
+function showUserProfileError(message) {
+    // Fill modal with error message
+    document.getElementById('userProfileTitle').textContent = 'Ошибка';
+    document.getElementById('userProfileAvatar').src = 'https://picsum.photos/seed/error/100/100.jpg';
+    document.getElementById('userProfileName').textContent = 'Неизвестный сталкер';
+    document.getElementById('userProfileRank').textContent = '---';
+    document.getElementById('userProfileStatus').textContent = 'недоступен';
+    document.getElementById('userProfileBio').textContent = message;
+    document.getElementById('userProfileMessages').textContent = '0';
+    document.getElementById('userProfileReputation').textContent = '0';
+    
+    // Set error styling
+    document.getElementById('userProfileRank').className = 'rank-badge level-error';
+    document.getElementById('userProfileStatus').className = 'status-indicator offline';
+    
+    // Show modal
+    document.getElementById('userProfileModal').classList.remove('hidden');
 }
 
 // Utility Functions
