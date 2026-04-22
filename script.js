@@ -577,8 +577,9 @@ function displayMessage(messageData) {
                 <button class="message-delete" onclick="deleteMessage(${messageData.id})">Удалить</button>
             </div>` : '';
         
-        const avatarUrl = messageData.avatar || `https://picsum.photos/seed/${messageData.author}/30/30.jpg`;
         const userId = messageData.author.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const user = users[userId];
+        const avatarUrl = (user && user.avatar) || messageData.avatar || `https://picsum.photos/seed/${messageData.author}/30/30.jpg`;
         
         if (messageData.isVoice) {
             messageElement.innerHTML = `
