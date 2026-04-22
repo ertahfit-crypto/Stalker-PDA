@@ -341,12 +341,13 @@
             </div>
         </div>
     </div>
-    <script type="module">
+    <script src="script.js"></script>
+<script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
       import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
       const firebaseConfig = {
-        apiKey: "AIzaSyBVsfUAcq4wrYmfPV-KhA1_NhGxlh9e9GQ",
+        apiKey: "AIzaSyBV...", // ТВОЙ КЛЮЧ ИЗ СКРИНШОТА
         authDomain: "stalker-pda-online.firebaseapp.com",
         projectId: "stalker-pda-online",
         storageBucket: "stalker-pda-online.appspot.com",
@@ -363,12 +364,8 @@
       window.dbFunctions = { collection, addDoc, onSnapshot, query, orderBy, limit };
 
       console.log("Связь с сетью установлена!");
-      
-      // Загружаем основной скрипт после инициализации Firebase
-      const script = document.createElement('script');
-      script.src = 'script.js';
-      document.body.appendChild(script);
-    </script>
+
+    <script src="script.js"></script>
 </body>
 </html>
 

@@ -1,7 +1,7 @@
 // S.T.A.L.K.E.R. Zone Terminal JavaScript
 
 // Global State
-let currentUser = null;
+var currentUser = null;
 let messages = [];
 let reports = [];
 let currentSection = 'chat';
@@ -475,6 +475,67 @@ function showRegisterForm() {
 }
 
 // Authentication Functions
+function loginUser() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    if (!username || !password) {
+        showGlitchEffect('loginBtn', 'Все поля обязательны!');
+        return;
+    }
+    
+    // Check stored users
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const user = users.find(u => u.username === username && u.password === password);
+    
+    if (user) {
+        currentUser = { ...user };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        showMainScreen();
+    } else {
+        showGlitchEffect('loginBtn', 'Неверные данные!');
+    }
+}
+
+function registerUser() {
+    const username = document.getElementById('registerUsername').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (!username || !password || !confirmPassword) {
+        showGlitchEffect('registerBtn', 'Все поля обязательны!');
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        showGlitchEffect('registerBtn', 'Пароли не совпадают!');
+        return;
+    }
+    
+    // Check stored users
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    if (users.some(u => u.username === username)) {
+        showGlitchEffect('registerBtn', 'Такой пользователь уже есть!');
+        return;
+    }
+    
+    const newUser = {
+        username: username,
+        password: password,
+        level: 'newcomer',
+        description: '',
+        avatar: 'https://picsum.photos/seed/' + username + '/100/100.jpg'
+    };
+    
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    
+    currentUser = newUser;
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    showMainScreen();
+}
+
+// Legacy function names for compatibility
 function handleLogin() {
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
