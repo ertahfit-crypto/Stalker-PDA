@@ -9,28 +9,29 @@ let currentSection = 'chat';
 // Data structures
 const locations = [
     {
-        id: 'pripyat',
-        name: 'Припять',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Pripyat_montage.jpg/330px-Pripyat_montage.jpg',
-        description: 'Заброшенный город-призрак. Высокий уровень радиации, редкие артефакты.'
-    },
-    {
-        id: 'cordon',
         name: 'Кордон',
-        image: 'https://static.wikia.nocookie.net/stalker/images/3/3b/Rookievillagest2_2.png/revision/latest/scale-to-width-down/1200?cb=20250120211038&path-prefix=ru',
-        description: 'Начальная зона сталкеров. Лагерь новичков и слабые угрозы.'
+        img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTAVkHybq9y-8hjNNC0vO8yuM_YGBSTYi86w&s',
+        desc: 'Начальная зона сталкеров'
     },
     {
-        id: 'garbage',
-        name: 'Свалка',
-        image: 'https://pbs.twimg.com/media/FvSWgT1X0AAFjyN.jpg',
-        description: 'Зона с кучами металлолома и бандитами. Повышенная опасность.'
-    },
-    {
-        id: 'agroprom',
         name: 'Агропром',
-        image: 'https://static.wikia.nocookie.net/stalker/images/8/8f/Nii.jpg/revision/latest?cb=20210622184530&path-prefix=ru',
-        description: 'Научный комплекс с подземными лабораториями и мутантами.'
+        img: 'https://static.wikia.nocookie.net/stalker/images/0/0c/XrEngine_2017-02-24_21-34-53-71.png',
+        desc: 'Научный комплекс'
+    },
+    {
+        name: 'Тёмная Долина',
+        img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop',
+        desc: 'Заброшенная промышленная зона'
+    },
+    {
+        name: 'Янтарь',
+        img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
+        desc: 'Болотистая местность'
+    },
+    {
+        name: 'Припять',
+        img: 'https://images.unsplash.com/photo-1608178398316-45f9616a2d5b?w=800&h=400&fit=crop',
+        desc: 'Город-призрак, центр Зоны'
     }
 ];
 
@@ -371,10 +372,7 @@ function setupEventListeners() {
     document.getElementById('saveReport').addEventListener('click', saveReport);
     document.getElementById('reportImageFile').addEventListener('change', handleReportImageChange);
     
-    // Map Events
-    document.querySelectorAll('.map-location').forEach(location => {
-        location.addEventListener('click', () => showLocationModal(location.dataset.location));
-    });
+    // Map hover effects are handled by CSS
     
     // Location Modal Events
     document.getElementById('closeLocation').addEventListener('click', hideLocationModal);
@@ -1080,32 +1078,42 @@ function handleReportImageChange(event) {
 }
 
 // Location Modal Functions
-function showLocationModal(locationId) {
-    const location = locations.find(loc => loc.id === locationId);
-    if (!location) return;
+function openModal(loc) {
+    const modal = document.getElementById('locationModal');
     
-    document.getElementById('locationTitle').textContent = location.name;
-    document.getElementById('locationDescription').textContent = location.description;
-    
-    const locationImage = document.getElementById('locationImage');
-    const imageContainer = document.querySelector('.location-image-container');
+    modal.querySelector('img').src = loc.img;
+    modal.querySelector('h2').textContent = loc.name;
+    modal.querySelector('p').textContent = loc.desc;
     
     // Handle image loading error
-    locationImage.onerror = function() {
-        imageContainer.innerHTML = '<div class="no-image-fallback">Нет изображения</div>';
+    const img = modal.querySelector('img');
+    img.onerror = function() {
+        img.src = 'https://picsum.photos/seed/fallback-location/800/400.jpg';
     };
     
-    // Reset container and set image
-    imageContainer.innerHTML = '';
-    imageContainer.appendChild(locationImage);
-    locationImage.src = location.image;
-    
-    document.getElementById('locationModal').classList.remove('hidden');
+    modal.classList.remove('hidden');
 }
 
 function hideLocationModal() {
     document.getElementById('locationModal').classList.add('hidden');
 }
+
+// Location click handler
+document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-location]');
+    if (!el) return;
+    
+    const name = el.dataset.location;
+    
+    const location = locations.find(l => l.name === name);
+    
+    if (!location) {
+        console.log('Локация не найдена:', name);
+        return;
+    }
+    
+    openModal(location);
+});
 
 // Trader Functions
 function loadTraders() {
