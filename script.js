@@ -163,34 +163,49 @@ function initializeApp() {
     loadTraders();
 }
 
-// Load users from localStorage
-function loadUsersFromStorage() {
-    const savedUsers = localStorage.getItem('users');
-    if (savedUsers) {
-        Object.assign(users, JSON.parse(savedUsers));
+// Save all users data to localStorage
+function saveUsers() {
+    try {
+        localStorage.setItem('users', JSON.stringify(users));
+        console.log('Users data saved successfully');
+    } catch (error) {
+        console.error('Error saving users data:', error);
     }
 }
 
-// Save users to localStorage
-function saveUsersToStorage() {
-    localStorage.setItem('users', JSON.stringify(users));
+// Load all users data from localStorage
+function loadUsers() {
+    try {
+        const savedUsers = localStorage.getItem('users');
+        if (savedUsers) {
+            const parsedUsers = JSON.parse(savedUsers);
+            // Merge with default users to preserve any new users
+            Object.assign(users, parsedUsers);
+            console.log('Users data loaded successfully');
+        }
+    } catch (error) {
+        console.error('Error loading users data:', error);
+    }
 }
 
-// Update UI with current user data
-function updateUI() {
+// Render complete UI from users data
+function renderUI() {
     if (!currentUser) return;
     
     const userId = currentUser.username.toLowerCase().replace(/[^a-z0-9]/g, '');
     const user = users[userId];
     
-    if (!user) return;
+    if (!user) {
+        console.warn('User not found in users object:', userId);
+        return;
+    }
     
-    // Update all avatars for current user
+    // Update all avatars in chat
     document.querySelectorAll('.message-avatar[data-user="' + userId + '"]').forEach(img => {
         img.src = user.avatar;
     });
     
-    // Update profile avatar if open
+    // Update profile avatar
     const profileAvatar = document.getElementById('largeAvatar');
     if (profileAvatar) {
         profileAvatar.src = user.avatar;
@@ -198,22 +213,75 @@ function updateUI() {
     
     // Update user profile modal if open
     const userProfileAvatar = document.getElementById('userProfileAvatar');
-    if (userProfileAvatar && userProfileAvatar.dataset.user === userId) {
+    if (userProfileAvatar) {
         userProfileAvatar.src = user.avatar;
         userProfileAvatar.dataset.user = userId;
         
-        // Update message count in profile
+        // Update profile stats
         const messageCount = document.getElementById('userProfileMessages');
         if (messageCount) {
             messageCount.textContent = user.messages || 0;
         }
         
-        // Update reputation
         const reputation = document.getElementById('userProfileReputation');
         if (reputation) {
             reputation.textContent = user.reputation || 0;
         }
+        
+        const userProfileName = document.getElementById('userProfileName');
+        if (userProfileName) {
+            userProfileName.textContent = user.name;
+        }
+        
+        const userProfileRank = document.getElementById('userProfileRank');
+        if (userProfileRank) {
+            userProfileRank.textContent = user.rank;
+        }
+        
+        const userProfileStatus = document.getElementById('userProfileStatus');
+        if (userProfileStatus) {
+            userProfileStatus.textContent = user.status;
+        }
+        
+        const userProfileBio = document.getElementById('userProfileBio');
+        if (userProfileBio) {
+            userProfileBio.textContent = user.bio;
+        }
     }
+    
+    // Update main profile if open
+    const profileUsername = document.getElementById('profileUsername');
+    if (profileUsername) {
+        profileUsername.textContent = user.name;
+    }
+    
+    const profileLevel = document.getElementById('profileLevel');
+    if (profileLevel) {
+        profileLevel.textContent = user.rank;
+    }
+    
+    const profileDescription = document.getElementById('profileDescription');
+    if (profileDescription) {
+        profileDescription.textContent = user.bio;
+    }
+    
+    // Re-render messages to use current avatars
+    renderMessages();
+    
+    console.log('UI rendered successfully from users data');
+}
+
+// Legacy functions for compatibility
+function saveUsersToStorage() {
+    saveUsers();
+}
+
+function loadUsersFromStorage() {
+    loadUsers();
+}
+
+function updateUI() {
+    renderUI();
 }
 
 // Setup Event Listeners
@@ -475,34 +543,34 @@ function saveProfile() {
         delete currentUser.tempAvatar;
     }
     
-    // Update stored users
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userIndex = users.findIndex(u => u.username === newUsername);
-    if (userIndex !== -1) {
-        users[userIndex] = currentUser;
+    // Update users object
+    const userId = newUsername.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!users[userId]) {
+        users[userId] = {
+            name: newUsername.toUpperCase(),
+            avatar: currentUser.avatar,
+            rank: newLevel === 'newcomer' ? 'Новичок' : newLevel === 'stalker' ? 'Сталкер' : newLevel === 'veteran' ? 'Ветеран' : 'Легенда',
+            status: 'онлайн',
+            bio: newDescription,
+            messages: 0,
+            reputation: 0
+        };
     } else {
-        users.push(currentUser);
+        users[userId].name = newUsername.toUpperCase();
+        users[userId].bio = newDescription;
+        users[userId].rank = newLevel === 'newcomer' ? 'Новичок' : newLevel === 'stalker' ? 'Сталкер' : newLevel === 'veteran' ? 'Ветеран' : 'Легенда';
+        users[userId].avatar = currentUser.avatar;
     }
-    localStorage.setItem('users', JSON.stringify(users));
+    
+    // Save users data
+    saveUsers();
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     
-    updateProfileDisplay();
+    // Render complete UI
+    renderUI();
+    
     hideProfileModal();
-}
-
-function updateProfileDisplay() {
-    if (!currentUser) return;
-    
-    document.getElementById('profileAvatar').src = currentUser.avatar;
-    
-    const levelMap = {
-        'newcomer': 'Новичок',
-        'stalker': 'Сталкер', 
-        'veteran': 'Бывалый'
-    };
-    
-    document.getElementById('profileLevel').textContent = levelMap[currentUser.level] || currentUser.level;
-    document.getElementById('profileLevel').className = 'profile-level level-' + currentUser.level;
+    showGlitchEffect('saveProfile', 'Профиль обновлён!');
 }
 
 // Chat Functions
@@ -528,7 +596,7 @@ function sendMessage() {
     users[userId].messages = (users[userId].messages || 0) + 1;
     
     // Save users data
-    saveUsersToStorage();
+    saveUsers();
     
     const messageData = {
         id: Date.now(),
@@ -890,7 +958,7 @@ function handleAvatarChange(event) {
         }
         
         // Save to localStorage
-        saveUsersToStorage();
+        saveUsers();
         
         // Update UI immediately
         updateUI();
