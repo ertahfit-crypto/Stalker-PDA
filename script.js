@@ -535,8 +535,7 @@ function sendMessage() {
         author: currentUser.username,
         content: message,
         timestamp: new Date().toISOString(),
-        level: currentUser.level,
-        avatar: users[userId].avatar
+        level: currentUser.level
     };
     
     messages.push(messageData);
@@ -560,8 +559,7 @@ function sendVoiceMessage() {
         content: '[VOICE MESSAGE]',
         timestamp: new Date().toISOString(),
         level: currentUser.level,
-        isVoice: true,
-        avatar: currentUser.avatar
+        isVoice: true
     };
     
     messages.push(voiceData);
@@ -710,6 +708,10 @@ function saveMessages() {
 
 function loadMessages() {
     messages = JSON.parse(localStorage.getItem('messages') || '[]');
+    renderMessages();
+}
+
+function renderMessages() {
     const messagesContainer = document.getElementById('chatMessages');
     messagesContainer.innerHTML = '<div class="system-message"><span class="system-text">SYSTEM: Welcome to the Zone, stalker...</span></div>';
     
@@ -892,6 +894,9 @@ function handleAvatarChange(event) {
         
         // Update UI immediately
         updateUI();
+        
+        // Re-render all messages to use new avatar
+        renderMessages();
         
         // Show success message
         showSuccessMessage('Аватар обновлён!');
