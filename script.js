@@ -15,8 +15,8 @@ const locations = [
     },
     {
         name: 'Агропром',
-        img: 'https://static.wikia.nocookie.net/stalker/images/0/0c/XrEngine_2017-02-24_21-34-53-71.png',
-        desc: 'Научный комплекс'
+        img: 'https://i.ytimg.com/vi/USTs82H1MAA/sddefault.jpg',
+        desc: 'Научный комплекс с подземными лабораториями'
     },
     {
         name: 'Тёмная Долина',
@@ -1079,18 +1079,33 @@ function handleReportImageChange(event) {
 
 // Location Modal Functions
 function openModal(loc) {
-    const modal = document.getElementById('locationModal');
+    const modal = document.querySelector('#locationModal');
     
-    modal.querySelector('img').src = loc.img;
-    modal.querySelector('h2').textContent = loc.name;
-    modal.querySelector('p').textContent = loc.desc;
+    if (!modal) {
+        console.error('Location modal not found');
+        return;
+    }
+    
+    const img = modal.querySelector('img');
+    const title = modal.querySelector('h2');
+    const desc = modal.querySelector('p');
+    
+    if (!img || !title || !desc) {
+        console.error('Modal elements not found');
+        return;
+    }
+    
+    img.src = loc.img;
+    title.textContent = loc.name;
+    desc.textContent = loc.desc;
     
     // Handle image loading error
-    const img = modal.querySelector('img');
     img.onerror = function() {
-        img.src = 'https://picsum.photos/seed/fallback-location/800/400.jpg';
+        console.log('Image failed to load, using fallback');
+        img.src = 'https://picsum.photos/seed/agroprom-fallback/800/400.jpg';
     };
     
+    modal.classList.add('active');
     modal.classList.remove('hidden');
 }
 
@@ -1104,14 +1119,17 @@ document.addEventListener('click', (e) => {
     if (!el) return;
     
     const name = el.dataset.location;
+    console.log('Clicked location:', name);
     
     const location = locations.find(l => l.name === name);
     
     if (!location) {
-        console.log('Локация не найдена:', name);
+        console.log('❌ Локация не найдена:', name);
+        console.log('Available locations:', locations.map(l => l.name));
         return;
     }
     
+    console.log('✅ Найдена локация:', location.name);
     openModal(location);
 });
 
