@@ -346,7 +346,7 @@
       import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
       const firebaseConfig = {
-        apiKey: "AIzaSyBVsfUAcq4wrYmfPV-KhA1_NhGxlh9e9GQ",
+        apiKey: "AIzaSyBVsfUacq4wrYmPV-KhA1_NhGx1h9e9GQ",
         authDomain: "stalker-pda-online.firebaseapp.com",
         projectId: "stalker-pda-online",
         storageBucket: "stalker-pda-online.appspot.com",
@@ -358,17 +358,13 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-      // Прокидываем данные, чтобы script.js их увидел
+      // Прокидываем функции в глобальное окно
       window.db = db;
       window.dbFunctions = { collection, addDoc, onSnapshot, query, orderBy, limit };
 
-      console.log("Связь с сетью установлена!");
-      
-      // Загружаем основной скрипт после инициализации Firebase
-      const script = document.createElement('script');
-      script.src = 'script.js';
-      document.body.appendChild(script);
+      console.log("📡 Связь с сетью установлена!");
     </script>
+
+    <script src="script.js"></script>
 </body>
 </html>
-
