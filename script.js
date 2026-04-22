@@ -9,29 +9,29 @@ let currentSection = 'chat';
 // Data structures
 const locations = [
     {
+        name: 'Припять',
+        img: 'https://it-blok.com.ua/image/catalog/blog/2025/stalker2/pripyat-stalker-2-intro.jpg.pagespeed.ce.cw7HSIcBjU.jpg',
+        desc: 'Заброшенный город-призрак с высоким уровнем радиации'
+    },
+    {
         name: 'Кордон',
         img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTAVkHybq9y-8hjNNC0vO8yuM_YGBSTYi86w&s',
         desc: 'Начальная зона сталкеров'
     },
     {
+        name: 'Свалка',
+        img: 'https://pbs.twimg.com/media/FvSWgT1X0AAFjyN.jpg',
+        desc: 'Территория металлолома и бандитов'
+    },
+    {
         name: 'Агропром',
         img: 'https://i.ytimg.com/vi/USTs82H1MAA/sddefault.jpg',
-        desc: 'Научный комплекс с подземными лабораториями'
+        desc: 'Научный комплекс с лабораториями'
     },
     {
-        name: 'Тёмная Долина',
-        img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=400&fit=crop',
-        desc: 'Заброшенная промышленная зона'
-    },
-    {
-        name: 'Янтарь',
-        img: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
-        desc: 'Болотистая местность'
-    },
-    {
-        name: 'Припять',
-        img: 'https://images.unsplash.com/photo-1608178398316-45f9616a2d5b?w=800&h=400&fit=crop',
-        desc: 'Город-призрак, центр Зоны'
+        name: 'Темная долина',
+        img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRILqZPN9IPdqcWRgHnibkN0KL3erUY119SzQ&s',
+        desc: 'Опасная зона с аномалиями и мутантами'
     }
 ];
 
@@ -1086,9 +1086,9 @@ function openModal(loc) {
         return;
     }
     
-    const img = modal.querySelector('img');
-    const title = modal.querySelector('h2');
-    const desc = modal.querySelector('p');
+    const img = modal.querySelector('#locationImage');
+    const title = modal.querySelector('#locationTitle');
+    const desc = modal.querySelector('#locationDescription');
     
     if (!img || !title || !desc) {
         console.error('Modal elements not found');
@@ -1102,11 +1102,11 @@ function openModal(loc) {
     // Handle image loading error
     img.onerror = function() {
         console.log('Image failed to load, using fallback');
-        img.src = 'https://picsum.photos/seed/agroprom-fallback/800/400.jpg';
+        img.src = 'https://picsum.photos/seed/location-fallback/800/400.jpg';
     };
     
-    modal.classList.add('active');
     modal.classList.remove('hidden');
+    modal.classList.add('active');
 }
 
 function hideLocationModal() {
