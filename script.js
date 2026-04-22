@@ -235,7 +235,7 @@ function renderProfile() {
     // Update main profile if open
     const profileUsername = document.getElementById('profileUsername');
     if (profileUsername) {
-        profileUsername.textContent = user.name;
+        profileUsername.textContent = currentUser.username;
     }
 
     const profileLevel = document.getElementById('profileLevel');
@@ -313,7 +313,7 @@ function renderUI() {
     // Update main profile if open
     const profileUsername = document.getElementById('profileUsername');
     if (profileUsername) {
-        profileUsername.textContent = user.name;
+        profileUsername.textContent = currentUser.username;
     }
 
     const profileLevel = document.getElementById('profileLevel');
@@ -605,7 +605,7 @@ function saveProfile() {
     const userId = newUsername.toLowerCase().replace(/[^a-z0-9]/g, '');
     if (!users[userId]) {
         users[userId] = {
-            name: newUsername.toUpperCase(),
+            name: currentUser.username,
             avatar: currentUser.avatar,
             rank: newLevel === 'newcomer' ? 'Новичок' : newLevel === 'stalker' ? 'Сталкер' : newLevel === 'veteran' ? 'Ветеран' : 'Легенда',
             status: 'онлайн',
@@ -614,7 +614,7 @@ function saveProfile() {
             reputation: 0
         };
     } else {
-        users[userId].name = newUsername.toUpperCase();
+        users[userId].name = currentUser.username;
         users[userId].bio = newDescription;
         users[userId].rank = newLevel === 'newcomer' ? 'Новичок' : newLevel === 'stalker' ? 'Сталкер' : newLevel === 'veteran' ? 'Ветеран' : 'Легенда';
         users[userId].avatar = currentUser.avatar;
@@ -639,12 +639,12 @@ function updateProfileDisplay() {
         'veteran': 'Бывалый'
     };
 
-    document.getElementById('profileLevel').textContent = levelMap[currentUser.level] || currentUser.level;
-    document.getElementById('profileLevel').className = 'profile-level level-' + currentUser.level;
+    document.getElementById('profileLevel').textContent = currentUser.username;
+    document.getElementById('profileLevel').className = 'profile-level';
 }
 
 // Chat Functions
-function sendMessage() {
+window.sendMessage = async function() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
 
@@ -656,7 +656,7 @@ function sendMessage() {
     const { collection, addDoc } = window.dbFunctions;
 
     try {
-        addDoc(collection(window.db, 'messages'), {
+        await addDoc(collection(window.db, 'messages'), {
             author: (window.currentUser && window.currentUser.username) ? window.currentUser.username : "Сталкер",
             content: message,
             timestamp: Date.now(),
@@ -770,19 +770,20 @@ function displayMessage(messageData) {
         });
 
         const deleteButton = isOwn && messageData.id ?
-            `<span class="delete-btn" onclick="deleteMessage('${messageData.id}')" style="color:red; cursor:pointer; margin-left:10px;">[X]</span>` : '';
+            `<span class="delete-btn" onclick="deleteMessage('${messageData.id}')" style="color:#ff6b6b; cursor:pointer; margin-left:8px; font-size:11px; opacity:0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">[X]</span>` : '';
 
-        const avatarUrl = messageData.avatar || `https://picsum.photos/seed/${messageData.author}/30/30.jpg`;
+        const authorName = messageData.author || 'Аноним';
+        const avatarUrl = messageData.avatar || `https://picsum.photos/seed/${authorName}/30/30.jpg`;
 
-        const userId = messageData.author.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
+        const userId = authorName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
         if (messageData.isVoice) {
             messageElement.innerHTML = `
                 <div class="message-header">
                     <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar clickable-user" data-user="${userId}">
-                    <div class="message-info">
-                        <span class="message-author level-${messageData.level} clickable-user" data-user="${userId}">${messageData.author}</span>
-                        <span class="message-time">${time}</span>
+                    <div class="message-info" style="display:flex; align-items:center;">
+                        <span class="message-author level-${messageData.level} clickable-user" data-user="${userId}">${authorName}</span>
+                        <span class="message-time" style="color:#00ff00; font-weight:bold; margin-left:auto;">${time}</span>
                     </div>
                     ${deleteButton}
                 </div>
@@ -800,9 +801,9 @@ function displayMessage(messageData) {
             messageElement.innerHTML = `
                 <div class="message-header">
                     <img src="${avatarUrl}" alt="${messageData.author}" class="message-avatar clickable-user" data-user="${userId}">
-                    <div class="message-info">
-                        <span class="message-author level-${messageData.level} clickable-user" data-user="${userId}">${messageData.author}</span>
-                        <span class="message-time">${time}</span>
+                    <div class="message-info" style="display:flex; align-items:center;">
+                        <span class="message-author level-${messageData.level} clickable-user" data-user="${userId}">${authorName}</span>
+                        <span class="message-time" style="color:#00ff00; font-weight:bold; margin-left:auto;">${time}</span>
                         ${deleteButton}
                     </div>
                 </div>
@@ -857,7 +858,7 @@ function hideReportModal() {
 
 let reportImageData = null;
 
-function saveReport() {
+window.saveReport = async function() {
     const title = document.getElementById('reportTitle').value.trim();
     const description = document.getElementById('reportDescription').value.trim();
 
@@ -886,27 +887,39 @@ function saveReport() {
         return;
     }
 
-    const reportData = {
-        id: Date.now(),
-        title,
-        description,
-        image: reportImageData || `https://picsum.photos/seed/anomaly${Date.now()}/300/200.jpg`,
-        author: currentUser.username,
-        timestamp: new Date().toISOString(),
-        level: currentUser.level
-    };
+    if (!window.dbFunctions) {
+        console.error('📡 Firebase не доступен для отчётов');
+        showGlitchEffect('saveReport', 'ОШИБКА СЕТИ');
+        return;
+    }
 
-    reports.push(reportData);
-    saveReports();
-    displayReport(reportData);
+    const { collection, addDoc } = window.dbFunctions;
 
-    // Show success message
-    showSuccessMessage('Отчёт отправлен в ПДА!');
+    try {
+        const reportData = {
+            title,
+            description,
+            image: reportImageData || `https://picsum.photos/seed/anomaly${Date.now()}/300/200.jpg`,
+            author: (window.currentUser && window.currentUser.username) ? window.currentUser.username : "Сталкер",
+            timestamp: Date.now(),
+            level: (window.currentUser && window.currentUser.level) ? window.currentUser.level : 'newcomer'
+        };
 
-    hideReportModal();
+        await addDoc(collection(window.db, 'reports'), reportData);
+        console.log('✅ Отчёт отправлен в базу');
 
-    // Clear image data
-    reportImageData = null;
+        // Show success message
+        showSuccessMessage('Отчёт отправлен в ПДА!');
+
+        hideReportModal();
+
+        // Clear image data
+        reportImageData = null;
+
+    } catch (error) {
+        console.error('❌ Ошибка отправки отчёта:', error);
+        showGlitchEffect('saveReport', 'ОШИБКА ОТПРАВКИ');
+    }
 }
 
 function showSuccessMessage(message) {
@@ -940,25 +953,47 @@ function displayReport(reportData) {
         <div class="report-meta">
             <span class="report-author level-${reportData.level}">${reportData.author}</span>
             <span class="report-date">${date}</span>
-            ${reportData.author === currentUser.username ? '<button class="report-delete" onclick="deleteReport(' + reportData.id + ')">DELETE</button>' : ''}
+            ${reportData.author === (currentUser && currentUser.username) ? '<button class="report-delete" onclick="deleteReport(\'' + reportData.id + '\')">DELETE</button>' : ''}
         </div>
     `;
 
     reportsGrid.appendChild(reportElement);
 }
 
-function deleteReport(reportId) {
-    reports = reports.filter(r => r.id !== reportId);
-    saveReports();
-    loadReports();
-}
+window.deleteReport = async function(reportId) {
+    if (!window.dbFunctions) {
+        console.error('📡 Firebase не доступен для удаления отчёта');
+        return;
+    }
 
+    if (!confirm('Удалить этот отчёт об аномалии?')) {
+        return;
+    }
+
+    try {
+        const { doc, deleteDoc } = window.dbFunctions;
+        await deleteDoc(doc(window.db, 'reports', reportId));
+        console.log('✅ Отчёт удалён из базы');
+
+        // Show success feedback
+        if (typeof showGlitchEffect === 'function') {
+            showGlitchEffect('newReportBtn', 'УДАЛЕНО');
+        }
+    } catch (error) {
+        console.error('❌ Ошибка удаления отчёта:', error);
+        if (typeof showGlitchEffect === 'function') {
+            showGlitchEffect('newReportBtn', 'ОШИБКА УДАЛЕНИЯ');
+        }
+    }
+};
+
+// Legacy functions - disabled for Firebase mode
 function saveReports() {
-    localStorage.setItem('reports', JSON.stringify(reports));
+    console.log('📊 Отчеты сохраняются в облаке...');
 }
 
 function loadReports() {
-    console.log('📊 Отчеты в спящем режиме...');
+    console.log('📊 Отчеты загружаются из облака...');
 }
 
 // File Handling Functions
@@ -1169,7 +1204,7 @@ function showTraderModal(traderId) {
         itemElement.innerHTML = `
             <div class="trader-item-icon">${item.icon}</div>
             <div class="trader-item-name">${item.name}</div>
-            <div class="trader-item-price">${item.price}</div>
+            <div class="trader-item-price">🪙 ${item.price}</div>
             <div class="trader-item-description">${item.description}</div>
         `;
         traderItems.appendChild(itemElement);
@@ -1312,35 +1347,6 @@ setInterval(updateArtifactCounter, 10000);
 window.loadMessages = function() { console.log("📡 Переключено на онлайн-эфир..."); };
 window.loadReports = function() { console.log("📊 Отчеты в спящем режиме..."); };
 
-// 1. Улучшенная отправка (сначала стирает, потом шлет)
-window.sendMessage = async function() {
-    const input = document.getElementById('chatInput');
-    if (!input) return;
-
-    const message = input.value.trim();
-    if (!message || !window.dbFunctions) return;
-
-    const { collection, addDoc } = window.dbFunctions;
-
-    // МГНОВЕННАЯ ОЧИСТКА (чтобы текст не залипал на телефоне)
-    input.value = '';
-
-    try {
-        await addDoc(collection(window.db, 'messages'), {
-            author: (window.currentUser && window.currentUser.username) ? window.currentUser.username : "Сталкер",
-            content: message,
-            timestamp: Date.now(),
-            level: (window.currentUser && window.currentUser.level) ? window.currentUser.level : 'newcomer'
-        });
-        console.log("✅ Сообщение в базе");
-    } catch (e) {
-        console.error("❌ Ошибка ПДА:", e);
-        input.value = message; // Возвращаем текст, если не ушло
-        if (typeof showGlitchEffect === 'function') {
-            showGlitchEffect('sendBtn', 'ОШИБКА СЕТИ');
-        }
-    }
-};
 
 // 2. Живая синхронизация
 function startChatSync() {
@@ -1375,7 +1381,12 @@ function startChatSync() {
 }
 
 // Поехали!
-startChatSync();
+(async () => {
+    // Wait a bit for Firebase to initialize
+    await new Promise(resolve => setTimeout(resolve, 500));
+    startChatSync();
+    startReportsSync();
+})();
 // 3. Удаление сообщений
 let pendingDeleteId = null;
 
@@ -1395,21 +1406,21 @@ function showDeleteConfirmModal() {
     const modal = document.getElementById('deleteConfirmModal');
     if (modal) {
         modal.classList.remove('hidden');
-        
+
         // Add event listeners for buttons
         const confirmBtn = document.getElementById('confirmDeleteBtn');
         const cancelBtn = document.getElementById('cancelDeleteBtn');
-        
+
         // Remove existing listeners to prevent duplicates
         const newConfirmBtn = confirmBtn.cloneNode(true);
         const newCancelBtn = cancelBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
         cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        
+
         // Add fresh listeners
         newConfirmBtn.addEventListener('click', confirmDeleteMessage);
         newCancelBtn.addEventListener('click', hideDeleteConfirmModal);
-        
+
         // Also close on overlay click
         const overlay = modal.querySelector('.delete-confirm-overlay');
         overlay.addEventListener('click', hideDeleteConfirmModal);
@@ -1434,7 +1445,7 @@ async function confirmDeleteMessage() {
         const { doc, deleteDoc } = window.dbFunctions;
         await deleteDoc(doc(window.db, 'messages', pendingDeleteId));
         console.log('✅ Сообщение удалено из базы');
-        
+
         // Show success feedback
         if (typeof showGlitchEffect === 'function') {
             showGlitchEffect('sendBtn', 'УДАЛЕНО');
@@ -1448,5 +1459,36 @@ async function confirmDeleteMessage() {
     
     hideDeleteConfirmModal();
 }
+// 4. Синхронизация отчётов
+function startReportsSync() {
+    if (!window.dbFunctions) {
+        console.log("📻 Поиск сигнала базы для отчётов...");
+        setTimeout(startReportsSync, 1000);
+        return;
+    }
+
+    const { collection, onSnapshot, query, orderBy, limit } = window.dbFunctions;
+    const q = query(collection(window.db, 'reports'), orderBy('timestamp', 'desc'), limit(50));
+
+    // Слушаем базу отчётов
+    onSnapshot(q, (snapshot) => {
+        const reportsGrid = document.getElementById('reportsGrid');
+        if (!reportsGrid) return;
+
+        reportsGrid.innerHTML = '';
+
+        const onlineReports = [];
+        snapshot.forEach(doc => onlineReports.push({ id: doc.id, ...doc.data() }));
+
+        onlineReports.forEach(report => {
+            if (typeof displayReport === 'function') {
+                displayReport(report);
+            }
+        });
+    }, (error) => {
+        console.error("📡 Ошибка связи отчётов (проверь Rules в Firebase):", error);
+    });
+}
+
 // --- КОНЕЦ МОДУЛЯ ---
 

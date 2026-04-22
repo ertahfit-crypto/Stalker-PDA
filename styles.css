@@ -1687,9 +1687,13 @@ body {
 }
 
 .trader-item-price {
-    color: var(--amber);
+    color: #ffd700;
     font-weight: bold;
     font-size: 12px;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .trader-item-description {
