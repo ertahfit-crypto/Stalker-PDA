@@ -9,28 +9,28 @@ let currentSection = 'chat';
 // Data structures
 const locations = [
     {
+        id: 'pripyat',
+        name: 'Припять',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Pripyat_montage.jpg/330px-Pripyat_montage.jpg',
+        description: 'Заброшенный город-призрак. Высокий уровень радиации, редкие артефакты.'
+    },
+    {
         id: 'cordon',
         name: 'Кордон',
-        image: 'https://picsum.photos/seed/cordon-stalker/800/400.jpg',
-        description: 'Кордон - это внешняя территория Zone. Здесь начинаются новички и находят убежище опытные сталкеры. Относительно безопасная зона с базой Сидоровича.'
+        image: 'https://static.wikia.nocookie.net/stalker/images/3/3b/Rookievillagest2_2.png/revision/latest/scale-to-width-down/1200?cb=20250120211038&path-prefix=ru',
+        description: 'Начальная зона сталкеров. Лагерь новичков и слабые угрозы.'
     },
     {
         id: 'garbage',
         name: 'Свалка',
-        image: 'https://picsum.photos/seed/garbage-stalker/800/400.jpg',
-        description: 'Свалка - опасная территория, полная аномалий и мутантов. Здесь можно найти ценные артефакты, но риск очень высок.'
+        image: 'https://pbs.twimg.com/media/FvSWgT1X0AAFjyN.jpg',
+        description: 'Зона с кучами металлолома и бандитами. Повышенная опасность.'
     },
     {
         id: 'agroprom',
         name: 'Агропром',
-        image: 'https://picsum.photos/seed/agroprom-stalker/800/400.jpg',
-        description: 'Агропромный исследовательский институт - таинственное место с подземными лабораториями. Множество секретов и опасностей.'
-    },
-    {
-        id: 'pripyat',
-        name: 'Припять',
-        image: 'https://picsum.photos/seed/pripyat-stalker/800/400.jpg',
-        description: 'Припять - мёртвый город near Чернобыльской АЭС. Самая опасная зона с высокой радиацией и монстрами. Но и награда здесь наибольшая.'
+        image: 'https://static.wikia.nocookie.net/stalker/images/8/8f/Nii.jpg/revision/latest?cb=20210622184530&path-prefix=ru',
+        description: 'Научный комплекс с подземными лабораториями и мутантами.'
     }
 ];
 
@@ -674,14 +674,20 @@ function showLocationModal(locationId) {
     if (!location) return;
     
     document.getElementById('locationTitle').textContent = location.name;
-    document.getElementById('locationImage').src = location.image;
     document.getElementById('locationDescription').textContent = location.description;
     
-    // Handle image loading error
     const locationImage = document.getElementById('locationImage');
+    const imageContainer = document.querySelector('.location-image-container');
+    
+    // Handle image loading error
     locationImage.onerror = function() {
-        this.src = `https://picsum.photos/seed/${locationId}-fallback/800/400.jpg`;
+        imageContainer.innerHTML = '<div class="no-image-fallback">Нет изображения</div>';
     };
+    
+    // Reset container and set image
+    imageContainer.innerHTML = '';
+    imageContainer.appendChild(locationImage);
+    locationImage.src = location.image;
     
     document.getElementById('locationModal').classList.remove('hidden');
 }
