@@ -597,8 +597,28 @@ function saveReport() {
     const title = document.getElementById('reportTitle').value.trim();
     const description = document.getElementById('reportDescription').value.trim();
     
-    if (!title || !description) {
-        showGlitchEffect('saveReport', 'Заголовок и описание обязательны!');
+    // Enhanced validation
+    if (!title) {
+        showGlitchEffect('saveReport', 'Введите заголовок!');
+        document.getElementById('reportTitle').focus();
+        return;
+    }
+    
+    if (!description) {
+        showGlitchEffect('saveReport', 'Введите описание!');
+        document.getElementById('reportDescription').focus();
+        return;
+    }
+    
+    if (title.length < 3) {
+        showGlitchEffect('saveReport', 'Заголовок слишком короткий!');
+        document.getElementById('reportTitle').focus();
+        return;
+    }
+    
+    if (description.length < 10) {
+        showGlitchEffect('saveReport', 'Описание слишком короткое!');
+        document.getElementById('reportDescription').focus();
         return;
     }
     
@@ -615,10 +635,29 @@ function saveReport() {
     reports.push(reportData);
     saveReports();
     displayReport(reportData);
+    
+    // Show success message
+    showSuccessMessage('Отчёт отправлен в ПДА!');
+    
     hideReportModal();
     
     // Clear image data
     reportImageData = null;
+}
+
+function showSuccessMessage(message) {
+    const messagesContainer = document.getElementById('chatMessages');
+    const successMessage = {
+        id: Date.now(),
+        author: 'SYSTEM',
+        content: message,
+        timestamp: new Date().toISOString(),
+        level: 'system'
+    };
+    
+    messages.push(successMessage);
+    saveMessages();
+    displayMessage(successMessage);
 }
 
 function displayReport(reportData) {
