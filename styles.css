@@ -1791,6 +1791,49 @@ body {
     text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
 }
 
+/* Save notification styles */
+.save-msg {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--dark-bg);
+    color: var(--terminal-green);
+    padding: 10px 15px;
+    border: 1px solid var(--terminal-green);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    border-radius: 6px;
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    z-index: 999;
+    animation: slideInFade 0.3s ease-out;
+}
+
+@keyframes slideInFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fix profile level background */
+.profile-level {
+    background: transparent !important;
+    color: var(--terminal-green) !important;
+    text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+}
+
+.profile-level:focus,
+.profile-level:active,
+.profile-level:hover {
+    background: transparent !important;
+    outline: none;
+    box-shadow: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .pda-nav {

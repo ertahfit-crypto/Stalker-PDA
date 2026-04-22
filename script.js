@@ -188,6 +188,58 @@ function loadUsers() {
     }
 }
 
+// Show save notification message
+function showSaveMessage() {
+    const existingMsg = document.querySelector('.save-msg');
+    if (existingMsg) {
+        existingMsg.remove();
+    }
+    
+    const msg = document.createElement('div');
+    msg.className = 'save-msg';
+    msg.textContent = '✔ Сохранения применены';
+    
+    document.body.appendChild(msg);
+    
+    setTimeout(() => {
+        if (msg.parentNode) {
+            msg.remove();
+        }
+    }, 2000);
+}
+
+// Render profile only
+function renderProfile() {
+    if (!currentUser) return;
+    
+    const userId = currentUser.username.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const user = users[userId];
+    
+    if (!user) return;
+    
+    // Update profile avatar
+    const profileAvatar = document.getElementById('largeAvatar');
+    if (profileAvatar) {
+        profileAvatar.src = user.avatar;
+    }
+    
+    // Update main profile if open
+    const profileUsername = document.getElementById('profileUsername');
+    if (profileUsername) {
+        profileUsername.textContent = user.name;
+    }
+    
+    const profileLevel = document.getElementById('profileLevel');
+    if (profileLevel) {
+        profileLevel.textContent = user.rank;
+    }
+    
+    const profileDescription = document.getElementById('profileDescription');
+    if (profileDescription) {
+        profileDescription.textContent = user.bio;
+    }
+}
+
 // Render complete UI from users data
 function renderUI() {
     if (!currentUser) return;
@@ -566,11 +618,23 @@ function saveProfile() {
     saveUsers();
     localStorage.setItem('currentUser', JSON.stringify(currentUser));
     
-    // Render complete UI
-    renderUI();
-    
+    updateProfileDisplay();
     hideProfileModal();
-    showGlitchEffect('saveProfile', 'Профиль обновлён!');
+}
+
+function updateProfileDisplay() {
+    if (!currentUser) return;
+    
+    document.getElementById('profileAvatar').src = currentUser.avatar;
+    
+    const levelMap = {
+        'newcomer': 'Новичок',
+        'stalker': 'Сталкер', 
+        'veteran': 'Бывалый'
+    };
+    
+    document.getElementById('profileLevel').textContent = levelMap[currentUser.level] || currentUser.level;
+    document.getElementById('profileLevel').className = 'profile-level level-' + currentUser.level;
 }
 
 // Chat Functions
@@ -612,7 +676,7 @@ function sendMessage() {
     input.value = '';
     
     // Update UI with new message count
-    updateUI();
+    renderMessages();
     
     // Simulate response
     setTimeout(() => {
@@ -960,14 +1024,12 @@ function handleAvatarChange(event) {
         // Save to localStorage
         saveUsers();
         
+        // Show save notification
+        showSaveMessage();
+        
         // Update UI immediately
-        updateUI();
-        
-        // Re-render all messages to use new avatar
-        renderMessages();
-        
-        // Show success message
-        showSuccessMessage('Аватар обновлён!');
+        renderProfile();     // ✅ обновить профиль
+        renderMessages();    // ✅ обновить чат
         
         // Store for profile save
         currentUser.tempAvatar = result;
