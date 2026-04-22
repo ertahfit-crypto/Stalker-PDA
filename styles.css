@@ -1118,17 +1118,82 @@ body {
     transition: all 0.3s;
     font-family: 'VT323', monospace;
     font-size: 12px;
-    color: var(--terminal-green);
     pointer-events: auto;
     z-index: 5;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Припять - красный (опасность, радиация) */
+.pripyat {
+    color: red;
+    text-shadow: 0 0 10px red;
+    border-color: red;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+/* Кордон - зелёный (начальная зона) */
+.kordon {
+    color: #00ff88;
+    text-shadow: 0 0 8px #00ff88;
+    border-color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+/* Свалка - жёлтый (мусор, хаос) */
+.svalka {
+    color: yellow;
+    text-shadow: 0 0 8px yellow;
+    border-color: yellow;
+    background: rgba(255, 255, 0, 0.1);
+}
+
+/* Агропром - синий (научная зона) */
+.agroprom {
+    color: #00aaff;
+    text-shadow: 0 0 8px #00aaff;
+    border-color: #00aaff;
+    background: rgba(0, 170, 255, 0.1);
+}
+
+/* Темная долина - фиолетовый (аномалии, мистика) */
+.dark-valley {
+    color: violet;
+    text-shadow: 0 0 10px violet;
+    border-color: violet;
+    background: rgba(238, 130, 238, 0.1);
 }
 
 .map-location:hover {
-    background: var(--radiation-green);
-    color: var(--dark-bg);
     transform: scale(1.1);
-    box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+    filter: brightness(1.3);
     z-index: 10;
+}
+
+/* Enhanced hover effects for each location */
+.pripyat:hover {
+    background: rgba(255, 0, 0, 0.3);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+}
+
+.kordon:hover {
+    background: rgba(0, 255, 136, 0.3);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.8);
+}
+
+.svalka:hover {
+    background: rgba(255, 255, 0, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
+}
+
+.agroprom:hover {
+    background: rgba(0, 170, 255, 0.3);
+    box-shadow: 0 0 20px rgba(0, 170, 255, 0.8);
+}
+
+.dark-valley:hover {
+    background: rgba(238, 130, 238, 0.3);
+    box-shadow: 0 0 20px rgba(238, 130, 238, 0.8);
 }
 
 .active-location {
