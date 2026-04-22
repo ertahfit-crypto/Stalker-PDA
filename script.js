@@ -16,7 +16,7 @@ const locations = [
     },
     {
         name: 'Кордон',
-        img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTAVkHybq9y-8hjNNC0vO8yuM_YGBSTYi86w&s',
+        img: 'https://stalker-worlds.games/forum/uploads/imgs/sw_1501329059__escape_farm.jpg',
         desc: 'Начальная зона сталкеров',
         highlight: false
     },
@@ -34,7 +34,7 @@ const locations = [
     },
     {
         name: 'Темная долина',
-        img: 'https://preview.redd.it/the-dark-valley-ogsr-minimum-settings-static-lighting-v0-yfagfwzxi0k61.jpg',
+        img: 'https://stalker-worlds.games/uploads/photos/show/2160_gibya-lcsb.jpg',
         desc: 'Опасная зона с аномалиями',
         highlight: false
     }
