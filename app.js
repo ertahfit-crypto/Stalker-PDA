@@ -202,18 +202,30 @@ function toggleAuthMode() {
 }
 
 async function handleAuth() {
-    const callsign = callsignInput.value.trim();
+    const email = callsignInput.value.trim();
     const password = passwordInput.value;
     
-    if (!callsign || !password) {
-        showError('Позывной и пароль обязательны');
+    if (!email || !password) {
+        showError('Email и пароль обязательны');
+        return;
+    }
+
+    // Validate email format (Firebase compatible)
+    const usernameRegex = /^[a-zA-Z0-9@._-]+$/;
+    if (!usernameRegex.test(email)) {
+        showError('Неверный формат email');
+        return;
+    }
+
+    // Validate password length (Firebase requirement)
+    if (password.length < 6) {
+        showError('Пароль должен быть не менее 6 символов');
         return;
     }
 
     try {
         if (isLoginMode) {
             // Login
-            const email = `${callsign.toLowerCase()}@stalker.pda`;
             await auth.signInWithEmailAndPassword(email, password);
         } else {
             // Registration
@@ -225,12 +237,14 @@ async function handleAuth() {
                 return;
             }
 
-            const email = `${callsign.toLowerCase()}@stalker.pda`;
             const result = await auth.createUserWithEmailAndPassword(email, password);
+            
+            // Extract username from email for display
+            const username = email.split('@')[0];
             
             // Save user data
             await db.collection('users').doc(result.user.uid).set({
-                callsign: callsign,
+                callsign: username,
                 email: email,
                 secretQuestion: secretQuestion,
                 secretAnswer: secretAnswer,
