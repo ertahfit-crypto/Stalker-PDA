@@ -125,10 +125,10 @@
             </div>
         </nav>
         
-        <!-- Profile Button -->
-        <div class="profile-btn" id="profileBtn">
-            <img src="https://picsum.photos/seed/default-avatar/50/50.jpg" alt="Avatar" class="profile-avatar" id="profileAvatar">
-            <div class="profile-level" id="profileLevel">Новичок</div>
+        <!-- Profile Toggle Container -->
+        <div class="profile-toggle-container" id="profileBtn">
+            <img src="https://picsum.photos/seed/default-avatar/50/50.jpg" alt="Avatar" class="profile-avatar-small" id="profileAvatar">
+            <span id="profileName" class="profile-name-display">Сталкер</span>
         </div>
         
         <!-- Content Sections -->
@@ -177,16 +177,16 @@
                 </div>
                 <div class="map-container">
                     <div class="zone-map">
-                        <div class="map-location" style="top: 30%; left: 50%;" data-location="Cordon">
+                        <div class="map-location" style="top: 30%; left: 50%;" onclick="window.showLocationInfo('Кордон')">
                             <span>Кордон</span>
                         </div>
-                        <div class="map-location" style="top: 50%; left: 30%;" data-location="Garbage">
+                        <div class="map-location" style="top: 50%; left: 30%;" onclick="window.showLocationInfo('Свалка')">
                             <span>Свалка</span>
                         </div>
-                        <div class="map-location" style="top: 70%; left: 60%;" data-location="Agroprom">
+                        <div class="map-location" style="top: 70%; left: 60%;" onclick="window.showLocationInfo('Агропром')">
                             <span>Агропром</span>
                         </div>
-                        <div class="map-location danger" style="top: 40%; left: 70%;" data-location="Pripyat">
+                        <div class="map-location danger" style="top: 40%; left: 70%;" onclick="window.showLocationInfo('Припять')">
                             <span>Припять</span>
                         </div>
                     </div>
@@ -280,6 +280,39 @@
         </div>
     </div>
     
-    <script src="script.js"></script>
+    <!-- PDA Confirmation Modal -->
+    <div id="pda-confirm-modal" class="pda-modal-overlay pda-hidden">
+        <div class="pda-modal-frame">
+            <div class="scanline"></div>
+            <div class="pda-modal-header">ВНИМАНИЕ: СИСТЕМА ПДА</div>
+            <div class="pda-modal-text">ПОДТВЕРДИТЕ УДАЛЕНИЕ ДАННЫХ?</div>
+            <div class="pda-modal-btns">
+                <button id="pda-confirm-yes" class="pda-btn danger">ДА</button>
+                <button id="pda-confirm-no" class="pda-btn">НЕТ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Viewer Modal -->
+    <div id="location-modal" class="pda-modal-overlay pda-hidden">
+        <div class="pda-modal-frame location-view">
+            <div class="scanline"></div>
+            <div class="location-header">
+                <h2 id="loc-title">ЛОКАЦИЯ</h2>
+                <button onclick="document.getElementById('location-modal').classList.add('pda-hidden')" class="pda-btn-close">X</button>
+            </div>
+            <div class="location-content">
+                <div id="loc-image-container">
+                    <img id="loc-image" src="" alt="zone-img">
+                    <div class="image-noise"></div>
+                </div>
+                <div class="location-info">
+                    <p id="loc-description"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="script.js"></script>
 </body>
 </html>

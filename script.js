@@ -1,21 +1,39 @@
 // S.T.A.L.K.E.R. Zone Terminal JavaScript
 
+// Firebase Imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 // Global State
 let currentUser = null;
 let messages = [];
 let reports = [];
 let currentSection = 'chat';
 
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBVsfUAcq4wrYmfPV-KhA1_NhGxlh9e9GQ",
+  authDomain: "stalker-pda-online.firebaseapp.com",
+  projectId: "stalker-pda-online",
+  storageBucket: "stalker-pda-online.firebasestorage.app",
+  messagingSenderId: "699881348726",
+  appId: "1:699881348726:web:1b389438115c937b00c957",
+  measurementId: "G-HR2VQ6YWZY"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    initApp();
     setupEventListeners();
     updateTime();
     loadStoredData();
 });
 
 // Initialize Application
-function initializeApp() {
+function initApp() {
     // Check if user is logged in
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
@@ -46,7 +64,9 @@ function setupEventListeners() {
     });
     
     // Profile Events
-    document.getElementById('profileBtn').addEventListener('click', showProfileModal);
+    document.querySelector('.profile-toggle-container').addEventListener('click', () => {
+        showProfileModal(); // Открываем модальное окно профиля
+    });
     document.getElementById('closeProfile').addEventListener('click', hideProfileModal);
     document.getElementById('saveProfile').addEventListener('click', saveProfile);
     document.getElementById('changeAvatarBtn').addEventListener('click', () => {
@@ -118,8 +138,7 @@ function showMainScreen() {
     document.getElementById('authScreen').classList.add('hidden');
     document.getElementById('mainScreen').classList.remove('hidden');
     updateProfileDisplay();
-    loadMessages();
-    loadReports();
+    startPdaSync(); // Запускаем реальную синхронизацию с Firebase
 }
 
 function showLoginForm() {
@@ -277,16 +296,17 @@ function saveProfile() {
 function updateProfileDisplay() {
     if (!currentUser) return;
     
-    document.getElementById('profileAvatar').src = currentUser.avatar;
+    // Update profile avatar in top-right corner
+    const avatar = document.getElementById('profileAvatar');
+    if (avatar) {
+        avatar.src = currentUser.avatar;
+    }
     
-    const levelMap = {
-        'newcomer': 'Новичок',
-        'stalker': 'Сталкер', 
-        'veteran': 'Бывалый'
-    };
-    
-    document.getElementById('profileLevel').textContent = levelMap[currentUser.level] || currentUser.level;
-    document.getElementById('profileLevel').className = 'profile-level level-' + currentUser.level;
+    // Update profile name
+    const profileName = document.getElementById('profileName');
+    if (profileName) {
+        profileName.textContent = currentUser.username;
+    }
 }
 
 // Chat Functions
@@ -373,9 +393,7 @@ function displayMessage(messageData) {
     });
     
     const deleteButton = messageData.author === currentUser.username ? 
-        `<div class="message-actions">
-            <button class="message-delete" onclick="deleteMessage(${messageData.id})">Удалить</button>
-        </div>` : '';
+        `<span class="pda-delete-trigger" onclick="window.pdaDelete('messages', '${messageData.id}')">[X]</span>` : '';
     
     messageElement.innerHTML = `
         <div class="message-header">
@@ -475,7 +493,7 @@ function displayReport(reportData) {
         <div class="report-meta">
             <span class="report-author level-${reportData.level}">${reportData.author}</span>
             <span class="report-date">${date}</span>
-            ${reportData.author === currentUser.username ? '<button class="report-delete" onclick="deleteReport(' + reportData.id + ')">DELETE</button>' : ''}
+            ${reportData.author === currentUser.username ? '<button class="report-delete" onclick="window.pdaDelete(\'reports\', ' + reportData.id + ')">DELETE</button>' : ''}
         </div>
     `;
     
@@ -621,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
     locations.forEach(location => {
         location.addEventListener('click', function() {
             const locationName = this.dataset.location;
-            showGlitchEffect('zoneTime', `Location: ${locationName}`);
+            showLocationInfo(locationName);
         });
     });
 });
@@ -637,3 +655,132 @@ function updateArtifactCounter() {
 
 // Update artifacts periodically
 setInterval(updateArtifactCounter, 10000);
+
+// PDA Delete Function
+window.pdaDelete = (collection, id) => {
+    const modal = document.getElementById('pda-confirm-modal');
+    modal.classList.remove('pda-hidden');
+    
+    document.getElementById('pda-confirm-yes').onclick = async () => {
+        try {
+            if (collection === 'messages') {
+                messages = messages.filter(m => m.id !== id);
+                saveMessages();
+                loadMessages();
+            } else if (collection === 'reports') {
+                reports = reports.filter(r => r.id !== id);
+                saveReports();
+                loadReports();
+            }
+            modal.classList.add('pda-hidden');
+            console.log("✅ Сектор очищен");
+        } catch (e) { 
+            console.error("❌ Ошибка:", e); 
+        }
+    };
+    
+    document.getElementById('pda-confirm-no').onclick = () => {
+        modal.classList.add('pda-hidden');
+    };
+};
+
+// Location Data Object
+const locationData = {
+    'Кордон': {
+        img: 'https://stalker-worlds.games/forum/uploads/imgs/sw_1501329037__3120_escape_11.jpg',
+        desc: 'Предбанник Зоны. Место, где новички проходят боевое крещение. Опасность низкая, но военные на блокпосту не жалуют гостей.'
+    },
+    'Свалка': {
+        img: 'https://preview.redd.it/stalker-2-has-the-truck-cemetery-map-this-is-amazing-v0-6egv2ufny76d1.jpg?width=1280&format=pjpg&auto=webp&s=114cc3bda1376379ed899c17339852fefeb350a7',
+        desc: 'Кладбище старой техники. Радиационный фон повышен. Обитель бандитов и мутантов, ищущих наживу среди гор металлолома.'
+    },
+    'Агропром': {
+        img: 'https://static.wikia.nocookie.net/stalker/images/2/29/Agroprom_factory_CS.jpg',
+        desc: 'Индустриальная зона с НИИ. Подземелья скрывают ужасы, а на поверхности хозяйничают военные патрули.'
+    },
+    'Припять': {
+        img: 'https://it-blok.com.ua/image/catalog/blog/2025/stalker2/pripyat-stalker-2-intro.jpg.pagespeed.ce.cw7HSIcBjU.jpg',
+        desc: 'Город-призрак. Мертвая тишина, прерываемая лишь треском счетчика Гейгера. Территория "Монолита" и самых опасных аномалий.'
+    }
+};
+
+// Real-time Sync Implementation
+function startPdaSync() {
+    // Messages listener
+    const messagesQ = query(collection(db, "messages"), orderBy("timestamp", "asc"));
+    onSnapshot(messagesQ, (snapshot) => {
+        const container = document.getElementById('chatMessages');
+        if (container) {
+            container.innerHTML = '<div class="system-message"><span class="system-text">SYSTEM: Welcome to the Zone, stalker...</span></div>';
+            snapshot.forEach((doc) => {
+                displayMessage({ id: doc.id, ...doc.data() }); // Рисуем актуальное
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+    });
+
+    // Reports listener
+    const reportsQ = query(collection(db, "reports"), orderBy("timestamp", "desc"));
+    onSnapshot(reportsQ, (snapshot) => {
+        const grid = document.getElementById('reportsGrid');
+        if (grid) {
+            grid.innerHTML = ''; // Очищаем старое
+            snapshot.forEach((doc) => {
+                displayReport({ id: doc.id, ...doc.data() }); // Рисуем актуальное
+            });
+        }
+    });
+}
+
+// Location Viewer Function
+function showLocationInfo(name) {
+    const modal = document.getElementById('location-modal');
+    const data = locationData[name];
+    
+    if (!data || !modal) {
+        console.error("☢️ Ошибка ПДА: Данные по локации " + name + " не найдены");
+        return;
+    }
+    
+    document.getElementById('loc-title').textContent = name;
+    document.getElementById('loc-image').src = data.img;
+    document.getElementById('loc-description').textContent = data.desc;
+    
+    modal.classList.remove('pda-hidden');
+    modal.style.display = 'flex'; // Гарантируем отображение
+    console.log("📡 Загрузка данных по сектору: " + name);
+}
+
+// PDA Delete Function
+function pdaDelete(collection, id) {
+    const modal = document.getElementById('pda-confirm-modal');
+    if (!modal) return;
+    
+    modal.classList.remove('pda-hidden');
+    modal.style.display = 'flex';
+
+    document.getElementById('pda-confirm-yes').onclick = async () => {
+        try {
+            // Используем глобальные db, doc и deleteDoc из импортов
+            const docRef = doc(db, collection, id);
+            await deleteDoc(docRef);
+            
+            modal.classList.add('pda-hidden');
+            modal.style.display = 'none';
+            console.log(`✅ Сектор ${collection} очищен: ${id}`);
+        } catch (e) {
+            console.error("❌ Ошибка ПДА при удалении:", e);
+            alert("Ошибка связи с базой данных");
+        }
+    };
+
+    document.getElementById('pda-confirm-no').onclick = () => {
+        modal.classList.add('pda-hidden');
+        modal.style.display = 'none';
+    };
+}
+
+// Global Function Binding
+window.showLocationInfo = showLocationInfo;
+window.pdaDelete = pdaDelete;
+window.switchSection = switchSection;
