@@ -2,14 +2,14 @@
 
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "stalker-pda-online.firebaseapp.com",
-    projectId: "stalker-pda-online",
-    storageBucket: "stalker-pda-online.firebasestorage.app",
-    messagingSenderId: "699881348726",
-    appId: "1:699881348726:web:1b389438115c937b00c957"
+  apiKey: "AIzaSyBVsfUAcq4wrYmfPV-KhA1_NhGxlh9e9GQ",
+  authDomain: "stalker-pda-online.firebaseapp.com",
+  projectId: "stalker-pda-online",
+  storageBucket: "stalker-pda-online.firebasestorage.app",
+  messagingSenderId: "699881348726",
+  appId: "1:699881348726:web:1b389438115c937b00c957",
+  measurementId: "G-HR2VQ6YWZY"
 };
-
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
