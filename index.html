@@ -3,368 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.T.A.L.K.E.R. Zone Terminal</title>
+    <title>Stalker PDA Online</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- CRT TV Effects -->
-    <div class="crt-overlay"></div>
-    <div class="scanlines"></div>
-    <div class="noise-overlay"></div>
-    
-    <!-- Auth Screen -->
-    <div id="authScreen" class="screen">
-        <div class="auth-container">
-            <div class="pda-frame">
-                <div class="pda-header">
-                    <div class="pda-title">PDA TERMINAL v2.1</div>
-                    <div class="radiation-indicator">
-                        <span class="radiation-icon"> RADIOACTIVE </span>
+    <div id="app">
+        <!-- Auth Page -->
+        <div id="authPage" class="page active">
+            <div class="auth-container">
+                <div class="pda-frame">
+                    <div class="pda-header">
+                        <h1 class="pda-title">S.T.A.L.K.E.R. PDA</h1>
+                        <div class="pda-status">ONLINE</div>
                     </div>
-                </div>
-                
-                <!-- Login Form -->
-                <div id="loginForm" class="auth-form">
-                    <h2 class="auth-title">ТРЕБУЕТСЯ АВТОРИЗАЦИЯ</h2>
-                    <div class="input-group">
-                        <input type="text" id="loginUsername" placeholder="Позывной..." class="pda-input" maxlength="20">
-                        <div class="input-glitch"></div>
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="loginPassword" placeholder="Код доступа..." class="pda-input">
-                        <div class="input-glitch"></div>
-                    </div>
-                    <button id="loginBtn" class="pda-btn">Войти</button>
-                    <div class="auth-switch">
-                        <span>Нет доступа? </span>
-                        <button id="switchToRegister" class="link-btn">Зарегистрироваться</button>
-                    </div>
-                </div>
-                
-                <!-- Register Form -->
-                <div id="registerForm" class="auth-form hidden">
-                    <h2 class="auth-title">РЕГИСТРАЦИЯ НОВОГО S.T.A.L.K.E.R.</h2>
-                    <div class="input-group">
-                        <input type="text" id="registerUsername" placeholder="Позывной..." class="pda-input" maxlength="20">
-                        <div class="input-glitch"></div>
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="registerPassword" placeholder="Код доступа..." class="pda-input">
-                        <div class="input-glitch"></div>
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="confirmPassword" placeholder="Подтвердите код..." class="pda-input">
-                        <div class="input-glitch"></div>
-                    </div>
-                    <button id="registerBtn" class="pda-btn">Войти в Zone</button>
-                    <div class="auth-switch">
-                        <span>Есть доступ? </span>
-                        <button id="switchToLogin" class="link-btn">Войти</button>
-                    </div>
-                </div>
-                
-                <div class="pda-footer">
-                    <div class="status-text">СИСТЕМА АКТИВНА</div>
-                    <div class="time-display" id="authTime">00:00:00</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Main Screen -->
-    <div id="mainScreen" class="screen hidden">
-        <!-- HUD Elements -->
-        <div class="hud-container">
-            <div class="hud-top">
-                <div class="radiation-meter">
-                    <div class="meter-label">РАДИАЦИЯ</div>
-                    <div class="meter-bar">
-                        <div class="meter-fill" id="radiationLevel"></div>
-                    </div>
-                </div>
-                <div class="zone-time" id="zoneTime">00:00:00</div>
-            </div>
-            
-            <div class="hud-bottom">
-                <div class="health-bar">
-                    <div class="bar-label">ЗДОРОВЬЕ</div>
-                    <div class="bar-container">
-                        <div class="bar-fill health-fill"></div>
-                    </div>
-                </div>
-                <div class="artifact-counter">
-                    <span>АРТЕФАКТЫ: </span>
-                    <span id="artifactCount">0</span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Horizontal PDA Navigation -->
-        <nav class="pda-nav">
-            <div class="pda-nav-frame">
-                <div class="nav-scan-line"></div>
-                <div class="nav-items">
-                    <div class="nav-item active" data-section="chat">
-                        <div class="nav-icon">Чат</div>
-                        <div class="nav-glitch"></div>
-                    </div>
-                    <div class="nav-item" data-section="anomalies">
-                        <div class="nav-icon">Аномалии</div>
-                        <div class="nav-glitch"></div>
-                    </div>
-                    <div class="nav-item" data-section="map">
-                        <div class="nav-icon">Карта</div>
-                        <div class="nav-glitch"></div>
-                    </div>
-                    <div class="nav-item" data-section="traders">
-                        <div class="nav-icon">Торговцы</div>
-                        <div class="nav-glitch"></div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-        
-        <!-- Profile Button -->
-        <div class="profile-btn" id="profileBtn">
-            <img src="https://picsum.photos/seed/default-avatar/50/50.jpg" alt="Avatar" class="profile-avatar" id="profileAvatar">
-            <div class="profile-level" id="profileLevel">Новичок</div>
-        </div>
-        
-        <!-- Content Sections -->
-        <main class="main-content">
-            <!-- Chat Section -->
-            <section id="chatSection" class="content-section active">
-                <div class="section-header">
-                    <h2 class="section-title">Чат S.T.A.L.K.E.R.</h2>
-                    <div class="connection-status">ОНЛАЙН</div>
-                </div>
-                <div class="chat-container">
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="system-message">
-                            <span class="system-text">СИСТЕМА: Добро пожаловать в Zone, сталкер...</span>
-                        </div>
-                    </div>
-                    <div class="chat-input-container">
+                    
+                    <div class="auth-form">
+                        <h2 id="authTitle">РЕГИСТРАЦИЯ В ЗОНЕ</h2>
+                        
                         <div class="input-group">
-                            <input type="text" id="chatInput" placeholder="Передать сообщение..." class="chat-input" maxlength="200">
-                            <button id="sendBtn" class="send-btn">Отправить</button>
+                            <label for="callsign">ПОЗЫВНОЙ:</label>
+                            <input type="text" id="callsign" placeholder="Введите позывной" class="terminal-input">
                         </div>
-                        <div class="voice-controls">
-                            <button id="voiceBtn" class="voice-btn">Голос</button>
+                        
+                        <div class="input-group">
+                            <label for="password">ПАРОЛЬ:</label>
+                            <input type="password" id="password" placeholder="Введите пароль" class="terminal-input">
                         </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Anomalies Section -->
-            <section id="anomaliesSection" class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">Отчёты об аномалиях</h2>
-                    <button id="newReportBtn" class="new-report-btn">Новый отчёт</button>
-                </div>
-                <div class="anomalies-container">
-                    <div class="reports-grid" id="reportsGrid">
-                        <!-- Reports will be dynamically added here -->
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Map Section -->
-            <section id="mapSection" class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">Карта Zone</h2>
-                </div>
-                <div class="map-container">
-                    <div class="zone-map">
-                        <div class="map-location pripyat" style="top: 30%; left: 50%;" data-location="Припять">
-                            <span>Припять</span>
+                        
+                        <div class="input-group" id="secretSection">
+                            <label for="secretQuestion">СЕКРЕТНЫЙ ВОПРОС:</label>
+                            <input type="text" id="secretQuestion" placeholder="Ваш любимый артефакт" class="terminal-input">
+                            
+                            <label for="secretAnswer">ОТВЕТ:</label>
+                            <input type="text" id="secretAnswer" placeholder="Ответ на вопрос" class="terminal-input">
                         </div>
-                        <div class="map-location kordon" style="top: 50%; left: 30%;" data-location="Кордон">
-                            <span>Кордон</span>
+                        
+                        <button id="authButton" class="pda-button">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+                        
+                        <div class="auth-switch">
+                            <span id="authSwitchText">Есть аккаунт? <a href="#" id="authSwitch">Войти</a></span>
                         </div>
-                        <div class="map-location svalka" style="top: 70%; left: 60%;" data-location="Свалка">
-                            <span>Свалка</span>
-                        </div>
-                        <div class="map-location agroprom" style="top: 40%; left: 70%;" data-location="Агропром">
-                            <span>Агропром</span>
-                        </div>
-                        <div class="map-location dark-valley" style="top: 60%; left: 40%;" data-location="Темная долина">
-                            <span>Темная долина</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Traders Section -->
-            <section id="tradersSection" class="content-section">
-                <div class="section-header">
-                    <h2 class="section-title">Торговцы</h2>
-                </div>
-                <div class="traders-container" id="tradersContainer">
-                    <!-- Traders will be dynamically added here -->
-                </div>
-            </section>
-        </main>
-    </div>
-    
-    <!-- Profile Modal -->
-    <div id="profileModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Профиль S.T.A.L.K.E.R.</h2>
-                <button class="close-btn" id="closeProfile">X</button>
-            </div>
-            <div class="modal-body">
-                <div class="profile-avatar-section">
-                    <img src="https://picsum.photos/seed/default-avatar/100/100.jpg" alt="Avatar" class="profile-large-avatar" id="largeAvatar">
-                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-                    <button class="change-avatar-btn" id="changeAvatarBtn">Изменить аватар</button>
-                </div>
-                <div class="profile-fields">
-                    <div class="field-group">
-                        <label>Позывной:</label>
-                        <input type="text" id="profileCallsign" class="profile-input" maxlength="20">
-                    </div>
-                    <div class="field-group">
-                        <label>Описание:</label>
-                        <textarea id="profileDescription" class="profile-textarea" maxlength="200"></textarea>
-                    </div>
-                    <div class="field-group">
-                        <label>Уровень:</label>
-                        <select id="profileLevelSelect" class="profile-select">
-                            <option value="newcomer">Новичок</option>
-                            <option value="stalker">Сталкер</option>
-                            <option value="veteran">Бывалый</option>
-                        </select>
-                    </div>
-                </div>
-                <button class="save-profile-btn" id="saveProfile">Сохранить</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- New Report Modal -->
-    <div id="reportModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Новый отчёт об аномалии</h2>
-                <button class="close-btn" id="closeReport">X</button>
-            </div>
-            <div class="modal-body">
-                <div class="field-group">
-                    <label>Заголовок:</label>
-                    <input type="text" id="reportTitle" class="profile-input" maxlength="50">
-                </div>
-                <div class="field-group">
-                    <label>Описание:</label>
-                    <textarea id="reportDescription" class="profile-textarea" maxlength="300"></textarea>
-                </div>
-                <div class="field-group">
-                    <label>Изображение:</label>
-                    <input type="file" id="reportImageFile" accept="image/*" class="file-input">
-                    <div id="imagePreview" class="image-preview"></div>
-                </div>
-                <button class="save-profile-btn" id="saveReport">Отправить отчёт</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Location Modal -->
-    <div id="locationModal" class="modal hidden">
-        <div class="modal-content location-modal-content">
-            <div class="modal-header">
-                <h2 id="locationTitle">Локация</h2>
-                <button class="close-btn" id="closeLocation">X</button>
-            </div>
-            <div class="modal-body">
-                <div class="location-image-container">
-                    <img id="locationImage" src="" alt="Location" class="location-image">
-                </div>
-                <div class="location-info">
-                    <p id="locationDescription">Описание локации...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Trader Inventory Modal -->
-    <div id="traderModal" class="modal hidden">
-        <div class="modal-content trader-modal-content">
-            <div class="modal-header">
-                <h2 id="traderTitle">Ассортимент торговца</h2>
-                <button class="close-btn" id="closeTrader">X</button>
-            </div>
-            <div class="modal-body">
-                <div class="trader-inventory">
-                    <div id="traderItems" class="trader-items">
-                        <!-- Items will be dynamically added here -->
+                        
+                        <div id="authError" class="error-message"></div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- User Profile Modal -->
-    <div id="userProfileModal" class="modal hidden">
-        <div class="modal-content user-profile-modal-content">
-            <div class="modal-header">
-                <h2 id="userProfileTitle">Профиль сталкера</h2>
-                <button class="close-btn" id="closeUserProfile">X</button>
-            </div>
-            <div class="modal-body">
-                <div class="user-profile-content">
-                    <div class="user-profile-avatar">
-                        <img id="userProfileAvatar" src="" alt="User Avatar" class="user-profile-large-avatar">
+
+        <!-- Main Menu -->
+        <div id="mainMenuPage" class="page">
+            <div class="menu-container">
+                <div class="pda-frame">
+                    <div class="pda-header">
+                        <h1 class="pda-title">PDA MAIN MENU</h1>
+                        <div class="pda-user-info">
+                            <span id="userCallsign">СТАЛКЕР</span>
+                            <button id="profileBtn" class="profile-button">👤</button>
+                        </div>
                     </div>
-                    <div class="user-profile-info">
-                        <h3 id="userProfileName" class="user-profile-name">Имя</h3>
-                        <div class="user-profile-rank">
-                            <span id="userProfileRank" class="rank-badge">Ранг</span>
-                            <span id="userProfileStatus" class="status-indicator">Статус</span>
-                        </div>
-                        <div class="user-profile-bio">
-                            <p id="userProfileBio">Описание...</p>
-                        </div>
-                        <div class="user-profile-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Сообщения:</span>
-                                <span id="userProfileMessages" class="stat-value">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Репутация:</span>
-                                <span id="userProfileReputation" class="stat-value">0</span>
-                            </div>
+                    
+                    <div class="menu-buttons">
+                        <button class="menu-button" data-page="chat">
+                            <span class="button-icon">💬</span>
+                            <span class="button-text">ЧАТ</span>
+                        </button>
+                        
+                        <button class="menu-button" data-page="map">
+                            <span class="button-icon">🗺️</span>
+                            <span class="button-text">КАРТА</span>
+                        </button>
+                        
+                        <button class="menu-button" data-page="market">
+                            <span class="button-icon">🎒</span>
+                            <span class="button-text">ТОРГОВЛЯ</span>
+                        </button>
+                        
+                        <button class="menu-button" data-page="profile">
+                            <span class="button-icon">👤</span>
+                            <span class="button-text">ПРОФИЛЬ</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Page -->
+        <div id="chatPage" class="page">
+            <div class="chat-container">
+                <div class="pda-frame">
+                    <div class="pda-header">
+                        <h1 class="pda-title">PDA CHAT SYSTEM</h1>
+                        <button id="backToMenu" class="back-button">← МЕНЮ</button>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Messages will be added here -->
+                    </div>
+                    
+                    <div class="chat-input">
+                        <input type="text" id="messageInput" placeholder="Введите сообщение..." class="terminal-input">
+                        <button id="sendMessage" class="pda-button">ОТПРАВИТЬ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Page -->
+        <div id="mapPage" class="page">
+            <div class="map-container">
+                <div class="pda-frame">
+                    <div class="pda-header">
+                        <h1 class="pda-title">ZONE MAP</h1>
+                        <button id="backToMenuFromMap" class="back-button">← МЕНЮ</button>
+                    </div>
+                    
+                    <div class="map-wrapper">
+                        <div class="zone-map" id="zoneMap">
+                            <!-- Location points will be added here -->
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Market Page -->
+        <div id="marketPage" class="page">
+            <div class="market-container">
+                <div class="pda-frame">
+                    <div class="pda-header">
+                        <h1 class="pda-title">ZONE MARKET</h1>
+                        <button id="backToMenuFromMarket" class="back-button">← МЕНЮ</button>
+                    </div>
+                    
+                    <div class="market-controls">
+                        <button id="addItemBtn" class="pda-button">ДОБАВИТЬ АРТЕФАКТ</button>
+                    </div>
+                    
+                    <div class="market-items" id="marketItems">
+                        <!-- Market items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profilePage" class="page">
+            <div class="profile-container">
+                <div class="pda-frame">
+                    <div class="pda-header">
+                        <h1 class="pda-title">STALKER PROFILE</h1>
+                        <button id="backToMenuFromProfile" class="back-button">← МЕНЮ</button>
+                    </div>
+                    
+                    <div class="profile-info">
+                        <div class="profile-field">
+                            <label>ПОЗЫВНОЙ:</label>
+                            <span id="profileCallsign">-</span>
+                        </div>
+                        <div class="profile-field">
+                            <label>ДАТА РЕГИСТРАЦИИ:</label>
+                            <span id="profileDate">-</span>
+                        </div>
+                        <div class="profile-field">
+                            <label>СТАТУС:</label>
+                            <span id="profileStatus">АКТИВЕН</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button id="logoutBtn" class="pda-button danger">ВЫЙТИ</button>
+                        <button id="adminPanelBtn" class="pda-button admin" style="display: none;">ПАНЕЛЬ АДМИНА</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPage" class="page">
+            <div class="admin-container">
+                <div class="pda-frame">
+                    <div class="pda-header">
+                        <h1 class="pda-title">ADMIN PANEL</h1>
+                        <button id="backToProfile" class="back-button">← ПРОФИЛЬ</button>
+                    </div>
+                    
+                    <div class="admin-login" id="adminLogin">
+                        <h2>АДМИН АВТОРИЗАЦИЯ</h2>
+                        <div class="input-group">
+                            <label for="adminLogin">LOGIN:</label>
+                            <input type="text" id="adminLoginInput" placeholder="admin" class="terminal-input">
+                        </div>
+                        <div class="input-group">
+                            <label for="adminPassword">PASSWORD:</label>
+                            <input type="password" id="adminPasswordInput" placeholder="•••••" class="terminal-input">
+                        </div>
+                        <button id="adminAuthBtn" class="pda-button">ВОЙТИ</button>
+                    </div>
+                    
+                    <div class="admin-panel" id="adminPanel" style="display: none;">
+                        <div class="admin-section">
+                            <h3>ПОЛЬЗОВАТЕЛИ</h3>
+                            <div id="adminUsers"></div>
+                        </div>
+                        
+                        <div class="admin-section">
+                            <h3>СООБЩЕНИЯ</h3>
+                            <div id="adminMessages"></div>
+                        </div>
+                        
+                        <div class="admin-section">
+                            <h3>ТОВАРЫ</h3>
+                            <div id="adminItems"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="locationModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle"></h2>
+                <img id="modalImage" src="" alt="">
+                <p id="modalDescription"></p>
+            </div>
+        </div>
+
+        <div id="addItemModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>ДОБАВИТЬ АРТЕФАКТ</h2>
+                <div class="input-group">
+                    <label for="itemName">НАЗВАНИЕ:</label>
+                    <input type="text" id="itemName" class="terminal-input">
+                </div>
+                <div class="input-group">
+                    <label for="itemDescription">ОПИСАНИЕ:</label>
+                    <textarea id="itemDescription" class="terminal-input"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="itemPrice">ЦЕНА:</label>
+                    <input type="number" id="itemPrice" class="terminal-input">
+                </div>
+                <div class="input-group">
+                    <label for="itemImage">ИЗОБРАЖЕНИЕ URL:</label>
+                    <input type="text" id="itemImage" class="terminal-input" placeholder="https://...">
+                </div>
+                <button id="submitItem" class="pda-button">ДОБАВИТЬ</button>
+            </div>
+        </div>
     </div>
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-      import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyBVsfUacq4wrYmPV-KhA1_NhGx1h9e9GQ",
-        authDomain: "stalker-pda-online.firebaseapp.com",
-        projectId: "stalker-pda-online",
-        storageBucket: "stalker-pda-online.appspot.com",
-        messagingSenderId: "699881348726",
-        appId: "1:699881348726:web:1b389438115c937b80c957",
-        measurementId: "G-HR7VQ6YWZY"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      // Прокидываем функции в глобальное окно
-      window.db = db;
-      window.dbFunctions = { collection, addDoc, onSnapshot, query, orderBy, limit };
-
-      console.log("📡 Связь с сетью установлена!");
-    </script>
-
-    <script src="script.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    
+    <script src="app.js"></script>
 </body>
 </html>
