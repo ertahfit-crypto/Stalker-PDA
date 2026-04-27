@@ -1,6 +1,4 @@
-// S.T.A.L.K.E.R. PDA Online Application
-
-// Firebase Configuration
+// Firebase конфигурация
 const firebaseConfig = {
   apiKey: "AIzaSyBVsfUAcq4wrYmfPV-KhA1_NhGxlh9e9GQ",
   authDomain: "stalker-pda-online.firebaseapp.com",
@@ -10,639 +8,451 @@ const firebaseConfig = {
   appId: "1:699881348726:web:1b389438115c937b00c957",
   measurementId: "G-HR2VQ6YWZY"
 };
-// Initialize Firebase
+
+// Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-// Location Data
-const locationData = {
-    'Кордон': {
-        img: 'https://stalker-worlds.games/forum/uploads/imgs/sw_1501329037__3120_escape_11.jpg',
-        desc: 'Предбанник Зоны. Здесь начинаются все новички. Место относительно безопасное, но всегда будь начеку.'
+// Глобальные переменные
+let currentUser = null;
+let chatListener = null;
+
+// Данные о локациях
+const locations = {
+    cordon: {
+        name: "Кордон",
+        description: "Вход в Зону. Первое, что видят новички. Здесь находятся лагерь новичков и пост военных. Относительно безопасное место, но beware - мутанты и бандиты не дремлют. Идеальное место для старта.",
+        image: "blob:https://gemini.google.com/20ff9b8b-14f7-4880-8938-4e715af50f02",
+        danger: "НИЗКАЯ",
+        artifacts: "ОБЫЧНЫЕ",
+        mutants: "СВИНЬИ, ПСЫ"
     },
-    'Свалка': {
-        img: 'https://preview.redd.it/stalker-2-has-the-truck-cemetery-map-this-is-amazing-v0-6egv2ufny76d1.jpg?auto=webp&s=1234567890abcdef',
-        desc: 'Кладбище техники. Здесь можно найти много полезного, но опасности поджидают на каждом шагу.'
+    garbage: {
+        name: "Свалка",
+        description: "Промышленная зона с кучами металлолома. Бандиты считают это своей территорией. Множество аномалий и артефактов. Здесь можно найти хорошие вещи, если сможешь отбиться от бандитов.",
+        image: "blob:https://gemini.google.com/3b2e0071-c983-4303-b347-5a6456644fb7",
+        danger: "СРЕДНЯЯ",
+        artifacts: "ХОРОШИЕ",
+        mutants: "СВИНЬИ, ПЛЕСЕНЬ"
     },
-    'Агропром': {
-        img: 'https://static.wikia.nocookie.net/stalker/images/2/29/Agroprom_factory_CS.jpg',
-        desc: 'Индустриальная зона. Мутанты abound here. Be careful in the underground tunnels.'
+    agroprom: {
+        name: "Агропром",
+        description: "Подземный исследовательский комплекс. Множество секретов и опасностей. Здесь проводились эксперименты, которые привели к появлению странных созданий. Очень опасно для неподготовленных сталкеров.",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=АГРОПРОМ",
+        danger: "ВЫСОКАЯ",
+        artifacts: "РЕДКИЕ",
+        mutants: "КРОВОСОСЫ, СНОРКИ"
     },
-    'Припять': {
-        img: 'https://it-blok.com.ua/image/catalog/blog/2025/stalker2/pripyat-stalker-2-intro.jpg',
-        desc: 'Город-призрак. Самое опасное место в Зоне. Только самые опытные сталкеры решаются сюда войти.'
+    darkvalley: {
+        name: "Тёмная долина",
+        description: "Территория контролируемая бандитами. Старый завод и заброшенные деревни. Множество укрытий и тайников. Не лучшее место для одиноких сталкеров.",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ТЁМНАЯ ДОЛИНА",
+        danger: "СРЕДНЯЯ",
+        artifacts: "ОБЫЧНЫЕ",
+        mutants: "ЗОМБИ, ПСЫ"
+    },
+    bar: {
+        name: "Бар 100 Рентген",
+        description: "Центральная точка для всех сталкеров. Здесь можно найти работу, информацию и отдохнуть. Бармен - лучший источник слухов. Здесь собираются все группировки.",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=БАР",
+        danger: "НИЗКАЯ",
+        artifacts: "НЕТ",
+        mutants: "НЕТ"
+    },
+    yantar: {
+        name: "Янтарь",
+        description: "Научная станция посреди болот. Высокий уровень радиации и психоактивных выбросов. Ученые изучают Зону, но им постоянно нужна помощь. Множество уникальных аномалий.",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ЯНТАРЬ",
+        danger: "ВЫСОКАЯ",
+        artifacts: "УНИКАЛЬНЫЕ",
+        mutants: "ЗОМБИ, КОНТРОЛЛЕР"
+    },
+    military: {
+        name: "Военные склады",
+        description: "Охраняемая территория военных. Хорошее снаряжение, но очень опасно. Военные стреляют без предупреждения. Только опытные сталкеры решаются сюда заходить.",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ВОЕННЫЕ СКЛАДЫ",
+        danger: "ЭКСТРЕМАЛЬНАЯ",
+        artifacts: "ОТЛИЧНЫЕ",
+        mutants: "НЕТ"
+    },
+    pripyat: {
+        name: "Припять",
+        description: "Мёртвый город-призрак. Когда-то здесь жили семьи ученых и работников ЧАЭС. Теперь - логово монстров и место последнего испытания для сталкеров. Очень высокая радиация.",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ПРИПЯТЬ",
+        danger: "ЭКСТРЕМАЛЬНАЯ",
+        artifacts: "УНИКАЛЬНЫЕ",
+        mutants: "ЧЕРНОПЫХ, БЮВЕР"
+    },
+    chernobyl: {
+        name: "ЧАЭС",
+        description: "Сердце Зоны. Самый опасный и самый таинственный участок. Здесь находится Изгнанник и Монолит. Никто не знает, что скрывается в саркофаге. Легендарное место.",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ЧАЭС",
+        danger: "ЛЕТАЛЬНАЯ",
+        artifacts: "ЛЕГЕНДАРНЫЕ",
+        mutants: "МОНОЛИТ, ИЗГНАННИК"
     }
 };
 
-// Application State
-let currentUser = null;
-let isAdmin = false;
-let isLoginMode = false;
-
-// DOM Elements
-const authPage = document.getElementById('authPage');
-const mainMenuPage = document.getElementById('mainMenuPage');
-const chatPage = document.getElementById('chatPage');
-const mapPage = document.getElementById('mapPage');
-const marketPage = document.getElementById('marketPage');
-const profilePage = document.getElementById('profilePage');
-const adminPage = document.getElementById('adminPage');
-
-// Auth Elements
-const authTitle = document.getElementById('authTitle');
-const authButton = document.getElementById('authButton');
-const authSwitch = document.getElementById('authSwitch');
-const authSwitchText = document.getElementById('authSwitchText');
-const secretSection = document.getElementById('secretSection');
-const authError = document.getElementById('authError');
-
-// Input Elements
-const callsignInput = document.getElementById('callsign');
-const passwordInput = document.getElementById('password');
-const secretQuestionInput = document.getElementById('secretQuestion');
-const secretAnswerInput = document.getElementById('secretAnswer');
-
-// Menu Elements
-const userCallsign = document.getElementById('userCallsign');
-const profileBtn = document.getElementById('profileBtn');
-
-// Chat Elements
-const chatMessages = document.getElementById('chatMessages');
-const messageInput = document.getElementById('messageInput');
-const sendMessageBtn = document.getElementById('sendMessage');
-
-// Map Elements
-const zoneMap = document.getElementById('zoneMap');
-
-// Market Elements
-const marketItems = document.getElementById('marketItems');
-const addItemBtn = document.getElementById('addItemBtn');
-
-// Profile Elements
-const profileCallsign = document.getElementById('profileCallsign');
-const profileDate = document.getElementById('profileDate');
-const logoutBtn = document.getElementById('logoutBtn');
-const adminPanelBtn = document.getElementById('adminPanelBtn');
-
-// Admin Elements
-const adminLogin = document.getElementById('adminLogin');
-const adminPanel = document.getElementById('adminPanel');
-const adminLoginInput = document.getElementById('adminLoginInput');
-const adminPasswordInput = document.getElementById('adminPasswordInput');
-const adminAuthBtn = document.getElementById('adminAuthBtn');
-
-// Modal Elements
-const locationModal = document.getElementById('locationModal');
-const addItemModal = document.getElementById('addItemModal');
-
-// Initialize Application
-document.addEventListener('DOMContentLoaded', () => {
-    initializeEventListeners();
+// Инициализация приложения
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+    setupEventListeners();
     checkAuthState();
-    initializeMap();
 });
 
-// Event Listeners
-function initializeEventListeners() {
-    // Auth Events
-    authButton.addEventListener('click', handleAuth);
-    authSwitch.addEventListener('click', (e) => {
+function initializeApp() {
+    // Добавляем эффекты при загрузке
+    animateRadiationLevel();
+    animateTerminalLines();
+    
+    // Обновляем время каждую минуту
+    setInterval(updateTime, 60000);
+    
+    // Эффект помех периодически
+    setInterval(addGlitchEffect, 8000);
+}
+
+function setupEventListeners() {
+    // Навигация
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.getAttribute('data-section');
+            switchSection(section);
+        });
+    });
+    
+    // Форма входа
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        toggleAuthMode();
+        login();
     });
-
-    // Menu Navigation
-    document.querySelectorAll('.menu-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const page = e.currentTarget.dataset.page;
-            navigateToPage(page);
-        });
+    
+    // Форма регистрации
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        register();
     });
-
-    // Back Buttons
-    document.querySelectorAll('.back-button').forEach(button => {
-        button.addEventListener('click', () => {
-            showPage('mainMenuPage');
-        });
-    });
-
-    // Profile Button
-    profileBtn.addEventListener('click', () => {
-        navigateToPage('profile');
-    });
-
-    // Chat Events
-    sendMessageBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
+    
+    // Чат - отправка по Enter
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             sendMessage();
         }
     });
-
-    // Market Events
-    addItemBtn.addEventListener('click', () => {
-        showModal('addItemModal');
-    });
-
-    // Profile Events
-    logoutBtn.addEventListener('click', logout);
-    adminPanelBtn.addEventListener('click', () => {
-        showPage('adminPage');
-    });
-
-    // Admin Events
-    adminAuthBtn.addEventListener('click', handleAdminAuth);
-
-    // Modal Events
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', (e) => {
-            const modal = e.target.closest('.modal');
-            hideModal(modal.id);
-        });
-    });
-
-    // Add Item Form
-    document.getElementById('submitItem').addEventListener('click', addMarketItem);
-
-    // Click outside modal to close
-    window.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) {
-            hideModal(e.target.id);
+    
+    // Закрытие модального окна по клику вне его
+    document.getElementById('locationModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeLocationModal();
         }
     });
 }
 
-// Authentication Functions
-function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
+function switchSection(sectionName) {
+    // Скрываем все секции
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
     
-    if (isLoginMode) {
-        authTitle.textContent = 'ВХОД В ЗОНУ';
-        authButton.textContent = 'ВОЙТИ';
-        authSwitchText.innerHTML = 'Нет аккаунта? <a href="#" id="authSwitch">Зарегистрироваться</a>';
-        secretSection.style.display = 'none';
-        authSwitch = document.getElementById('authSwitch');
-        authSwitch.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleAuthMode();
-        });
-    } else {
-        authTitle.textContent = 'РЕГИСТРАЦИЯ В ЗОНЕ';
-        authButton.textContent = 'ЗАРЕГИСТРИРОВАТЬСЯ';
-        authSwitchText.innerHTML = 'Есть аккаунт? <a href="#" id="authSwitch">Войти</a>';
-        secretSection.style.display = 'block';
-        authSwitch = document.getElementById('authSwitch');
-        authSwitch.addEventListener('click', (e) => {
-            e.preventDefault();
-            toggleAuthMode();
-        });
-    }
-}
-
-async function handleAuth() {
-    const email = callsignInput.value.trim();
-    const password = passwordInput.value;
+    // Показываем выбранную секцию
+    document.getElementById(sectionName).classList.add('active');
     
-    if (!email || !password) {
-        showError('Email и пароль обязательны');
-        return;
-    }
-
-    // Validate email format (Firebase compatible)
-    const usernameRegex = /^[a-zA-Z0-9@._-]+$/;
-    if (!usernameRegex.test(email)) {
-        showError('Неверный формат email');
-        return;
-    }
-
-    // Validate password length (Firebase requirement)
-    if (password.length < 6) {
-        showError('Пароль должен быть не менее 6 символов');
-        return;
-    }
-
-    try {
-        if (isLoginMode) {
-            // Login
-            await auth.signInWithEmailAndPassword(email, password);
-        } else {
-            // Registration
-            const secretQuestion = secretQuestionInput.value.trim();
-            const secretAnswer = secretAnswerInput.value.trim();
-            
-            if (!secretQuestion || !secretAnswer) {
-                showError('Секретный вопрос и ответ обязательны');
-                return;
-            }
-
-            const result = await auth.createUserWithEmailAndPassword(email, password);
-            
-            // Extract username from email for display
-            const username = email.split('@')[0];
-            
-            // Save user data
-            await db.collection('users').doc(result.user.uid).set({
-                callsign: username,
-                email: email,
-                secretQuestion: secretQuestion,
-                secretAnswer: secretAnswer,
-                registrationDate: new Date().toISOString(),
-                isAdmin: false
-            });
-        }
-    } catch (error) {
-        showError(getErrorMessage(error));
+    // Обновляем навигацию
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+    
+    // Специальная инициализация для чата
+    if (sectionName === 'chat' && currentUser) {
+        initializeChat();
     }
 }
 
-function getErrorMessage(error) {
-    switch (error.code) {
-        case 'auth/email-already-in-use':
-            return 'Такой сталкер уже существует';
-        case 'auth/user-not-found':
-            return 'Сталкер не найден';
-        case 'auth/wrong-password':
-            return 'Неверный пароль';
-        case 'auth/weak-password':
-            return 'Пароль слишком слабый';
-        case 'auth/invalid-email':
-            return 'Неверный формат позывного';
-        default:
-            return 'Ошибка: ' + error.message;
-    }
-}
-
-function showError(message) {
-    authError.textContent = message;
-    authError.classList.add('show');
-    setTimeout(() => {
-        authError.classList.remove('show');
-    }, 5000);
-}
-
-// Auth State Management
+// Аутентификация
 function checkAuthState() {
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            currentUser = user;
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            const userData = userDoc.data();
-            
-            if (userData) {
-                userCallsign.textContent = userData.callsign;
-                isAdmin = userData.isAdmin || false;
-                
-                showPage('mainMenuPage');
-                loadChatMessages();
-                loadMarketItems();
-            }
-        } else {
-            currentUser = null;
-            isAdmin = false;
-            showPage('authPage');
+    auth.onAuthStateChanged(function(user) {
+        currentUser = user;
+        updateUserInterface(user);
+    });
+}
+
+function updateUserInterface(user) {
+    const userInfo = document.getElementById('userInfo');
+    const username = userInfo.querySelector('.stalker-name');
+    
+    if (user) {
+        username.textContent = user.displayName || user.email;
+        userInfo.style.display = 'flex';
+        
+        // Разблокируем чат
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const authWarning = document.getElementById('authWarning');
+        
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        authWarning.style.display = 'none';
+        
+        // Инициализируем чат если на странице чата
+        if (document.getElementById('chat').classList.contains('active')) {
+            initializeChat();
         }
-    });
+    } else {
+        userInfo.style.display = 'none';
+        
+        // Блокируем чат
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const authWarning = document.getElementById('authWarning');
+        
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        authWarning.style.display = 'block';
+        
+        // Отписываемся от чата
+        if (chatListener) {
+            chatListener();
+            chatListener = null;
+        }
+    }
 }
 
-async function logout() {
+async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginError');
+    
     try {
-        await auth.signOut();
+        await auth.signInWithEmailAndPassword(email, password);
+        switchSection('home');
+        showSystemMessage('Успешный вход в систему, сталкер');
     } catch (error) {
-        console.error('Logout error:', error);
+        errorDiv.textContent = 'Ошибка доступа, сталкер: ' + getErrorMessage(error.code);
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
     }
 }
 
-// Navigation Functions
-function navigateToPage(page) {
-    switch (page) {
-        case 'chat':
-            showPage('chatPage');
-            break;
-        case 'map':
-            showPage('mapPage');
-            break;
-        case 'market':
-            showPage('marketPage');
-            break;
-        case 'profile':
-            showPage('profilePage');
-            loadProfile();
-            break;
-    }
-}
-
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    document.getElementById(pageId).classList.add('active');
-}
-
-// Chat Functions
-async function sendMessage() {
-    const message = messageInput.value.trim();
-    if (!message || !currentUser) return;
-
+async function register() {
+    const username = document.getElementById('registerUsername').value;
+    const email = document.getElementById('registerEmail').value;
+    const password = document.getElementById('registerPassword').value;
+    const errorDiv = document.getElementById('registerError');
+    
     try {
-        const userDoc = await db.collection('users').doc(currentUser.uid).get();
-        const userData = userDoc.data();
-
-        await db.collection('chat').add({
-            userId: currentUser.uid,
-            callsign: userData.callsign,
-            message: message,
-            timestamp: new Date()
+        const result = await auth.createUserWithEmailAndPassword(email, password);
+        
+        // Обновляем displayName
+        await result.user.updateProfile({
+            displayName: username
         });
-
-        messageInput.value = '';
+        
+        switchSection('home');
+        showSystemMessage('Регистрация завершена. Добро пожаловать в Зону, ' + username);
     } catch (error) {
-        console.error('Send message error:', error);
+        errorDiv.textContent = 'Ошибка регистрации: ' + getErrorMessage(error.code);
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
     }
 }
 
-function loadChatMessages() {
-    if (!currentUser) return;
+function logout() {
+    auth.signOut().then(() => {
+        switchSection('home');
+        showSystemMessage('Выход из системы выполнен');
+    });
+}
 
-    db.collection('chat')
+function getErrorMessage(errorCode) {
+    const errorMessages = {
+        'auth/user-not-found': 'Пользователь не найден',
+        'auth/wrong-password': 'Неверный пароль',
+        'auth/email-already-in-use': 'Email уже используется',
+        'auth/weak-password': 'Слишком слабый пароль',
+        'auth/invalid-email': 'Неверный формат email',
+        'auth/network-request-failed': 'Проблемы с соединением'
+    };
+    return errorMessages[errorCode] || 'Неизвестная ошибка';
+}
+
+// Чат
+function initializeChat() {
+    if (chatListener) return;
+    
+    const chatMessages = document.getElementById('chatMessages');
+    
+    chatListener = db.collection('chatMessages')
         .orderBy('timestamp', 'desc')
         .limit(50)
-        .onSnapshot((snapshot) => {
+        .onSnapshot(function(snapshot) {
             chatMessages.innerHTML = '';
+            
             snapshot.docs.reverse().forEach(doc => {
-                const messageData = doc.data();
-                displayMessage(messageData, doc.id);
+                const message = doc.data();
+                addMessageToChat(message);
             });
+            
+            // Прокручиваем вниз
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
 }
 
-function displayMessage(messageData, messageId) {
+function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message || !currentUser) return;
+    
+    const messageData = {
+        text: message,
+        user: currentUser.displayName || currentUser.email,
+        userId: currentUser.uid,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    db.collection('chatMessages').add(messageData)
+        .then(() => {
+            messageInput.value = '';
+        })
+        .catch(error => {
+            console.error('Ошибка отправки сообщения:', error);
+            showSystemMessage('Ошибка отправки сообщения');
+        });
+}
+
+function addMessageToChat(message) {
+    const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'chat-message';
-    if (messageData.userId === currentUser.uid) {
-        messageDiv.classList.add('own');
-    }
-
-    const time = new Date(messageData.timestamp.toDate()).toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-
+    
+    const timestamp = message.timestamp ? 
+        new Date(message.timestamp.toDate()).toLocaleTimeString() : 
+        new Date().toLocaleTimeString();
+    
+    messageDiv.className = 'user-log';
     messageDiv.innerHTML = `
-        <div class="message-header">
-            <span class="message-author">${messageData.callsign}</span>
-            <span class="message-time">${time}</span>
-        </div>
-        <div class="message-text">${messageData.message}</div>
-        ${isAdmin || messageData.userId === currentUser.uid ? 
-            `<button class="message-delete" onclick="deleteMessage('${messageId}')">Удалить</button>` : ''}
+        <span class="log-time">[${timestamp}]</span>
+        <span class="log-text">&lt;${message.user}&gt; ${message.text}</span>
     `;
-
+    
     chatMessages.appendChild(messageDiv);
 }
 
-async function deleteMessage(messageId) {
-    if (!confirm('Удалить это сообщение?')) return;
-
-    try {
-        await db.collection('chat').doc(messageId).delete();
-    } catch (error) {
-        console.error('Delete message error:', error);
-    }
-}
-
-// Map Functions
-function initializeMap() {
-    Object.keys(locationData).forEach((location, index) => {
-        const point = document.createElement('div');
-        point.className = 'location-point';
-        point.style.left = `${20 + (index * 20)}%`;
-        point.style.top = `${30 + (index * 15)}%`;
-        
-        const label = document.createElement('div');
-        label.className = 'location-label';
-        label.textContent = location;
-        point.appendChild(label);
-        
-        point.addEventListener('click', () => {
-            showLocationModal(location);
-        });
-        
-        zoneMap.appendChild(point);
-    });
-}
-
-function showLocationModal(location) {
-    const data = locationData[location];
-    document.getElementById('modalTitle').textContent = location;
-    document.getElementById('modalImage').src = data.img;
-    document.getElementById('modalDescription').textContent = data.desc;
-    showModal('locationModal');
-}
-
-// Market Functions
-async function addMarketItem() {
-    const name = document.getElementById('itemName').value.trim();
-    const description = document.getElementById('itemDescription').value.trim();
-    const price = document.getElementById('itemPrice').value;
-    const image = document.getElementById('itemImage').value.trim();
-
-    if (!name || !description || !price) {
-        alert('Название, описание и цена обязательны');
-        return;
-    }
-
-    try {
-        const userDoc = await db.collection('users').doc(currentUser.uid).get();
-        const userData = userDoc.data();
-
-        await db.collection('market').add({
-            name: name,
-            description: description,
-            price: parseInt(price),
-            image: image || 'https://via.placeholder.com/80x80/001100/00ff00?text=АРТЕФАКТ',
-            sellerId: currentUser.uid,
-            sellerName: userData.callsign,
-            timestamp: new Date()
-        });
-
-        // Clear form
-        document.getElementById('itemName').value = '';
-        document.getElementById('itemDescription').value = '';
-        document.getElementById('itemPrice').value = '';
-        document.getElementById('itemImage').value = '';
-
-        hideModal('addItemModal');
-    } catch (error) {
-        console.error('Add item error:', error);
-    }
-}
-
-function loadMarketItems() {
-    db.collection('market')
-        .orderBy('timestamp', 'desc')
-        .onSnapshot((snapshot) => {
-            marketItems.innerHTML = '';
-            snapshot.forEach(doc => {
-                const item = doc.data();
-                displayMarketItem(item, doc.id);
-            });
-        });
-}
-
-function displayMarketItem(item, itemId) {
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'market-item';
-
-    itemDiv.innerHTML = `
-        <img src="${item.image}" alt="${item.name}" class="market-item-image">
-        <div class="market-item-info">
-            <div class="market-item-title">${item.name}</div>
-            <div class="market-item-description">${item.description}</div>
-            <div class="market-item-price">${item.price} ₽</div>
-        </div>
-        <div class="market-item-actions">
-            <button class="pda-button">КУПИТЬ</button>
-            ${item.sellerId === currentUser.uid ? 
-                `<button class="pda-button danger" onclick="deleteMarketItem('${itemId}')">УДАЛИТЬ</button>` : ''}
-        </div>
+function showSystemMessage(text) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    
+    const timestamp = new Date().toLocaleTimeString();
+    
+    messageDiv.className = 'system-log';
+    messageDiv.innerHTML = `
+        <span class="log-time">[${timestamp}]</span>
+        <span class="log-text">${text}</span>
     `;
-
-    marketItems.appendChild(itemDiv);
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-async function deleteMarketItem(itemId) {
-    if (!confirm('Удалить этот товар?')) return;
-
-    try {
-        await db.collection('market').doc(itemId).delete();
-    } catch (error) {
-        console.error('Delete item error:', error);
-    }
+// Карта локаций
+function showLocation(locationKey) {
+    const location = locations[locationKey];
+    if (!location) return;
+    
+    document.getElementById('locationTitle').textContent = location.name;
+    document.getElementById('locationImage').src = location.image;
+    document.getElementById('locationDescription').textContent = location.description;
+    document.getElementById('locationDanger').textContent = location.danger;
+    document.getElementById('locationArtifacts').textContent = location.artifacts;
+    document.getElementById('locationMutants').textContent = location.mutants;
+    
+    const modal = document.getElementById('locationModal');
+    modal.classList.add('show');
+    
+    // Добавляем эффект открытия
+    setTimeout(() => {
+        modal.querySelector('.metal-modal-content').style.animation = 'modal-slide-in 0.5s ease';
+    }, 100);
 }
 
-// Profile Functions
-async function loadProfile() {
-    if (!currentUser) return;
+function closeLocationModal() {
+    const modal = document.getElementById('locationModal');
+    modal.classList.remove('show');
+}
 
-    try {
-        const userDoc = await db.collection('users').doc(currentUser.uid).get();
-        const userData = userDoc.data();
-
-        profileCallsign.textContent = userData.callsign;
-        profileDate.textContent = new Date(userData.registrationDate).toLocaleDateString('ru-RU');
-
-        // Show admin button if user is admin
-        if (userData.isAdmin) {
-            adminPanelBtn.style.display = 'block';
+// Анимации и эффекты
+function animateRadiationLevel() {
+    const radValue = document.querySelector('.rad-value');
+    setInterval(() => {
+        const newValue = (Math.random() * 0.5 + 0.05).toFixed(2);
+        radValue.textContent = newValue;
+        
+        // Изменяем цвет в зависимости от уровня
+        if (newValue > 0.3) {
+            radValue.style.color = 'var(--danger-red)';
+        } else if (newValue > 0.2) {
+            radValue.style.color = 'var(--warning-orange)';
         } else {
-            adminPanelBtn.style.display = 'none';
+            radValue.style.color = 'var(--radiation-orange)';
         }
-    } catch (error) {
-        console.error('Load profile error:', error);
-    }
+    }, 3000);
 }
 
-// Admin Functions
-function handleAdminAuth() {
-    const login = adminLoginInput.value.trim();
-    const password = adminPasswordInput.value;
-
-    if (login === 'admin' && password === '12345') {
-        isAdmin = true;
-        adminLogin.style.display = 'none';
-        adminPanel.style.display = 'block';
-        loadAdminData();
-    } else {
-        alert('Неверные данные администратора');
-    }
-}
-
-async function loadAdminData() {
-    // Load users
-    const usersSnapshot = await db.collection('users').get();
-    const adminUsers = document.getElementById('adminUsers');
-    adminUsers.innerHTML = '';
-
-    usersSnapshot.forEach(doc => {
-        const user = doc.data();
-        const userDiv = document.createElement('div');
-        userDiv.className = 'admin-item';
-        userDiv.innerHTML = `
-            <div class="admin-item-info">
-                <strong>${user.callsign}</strong> - ${user.email}
-            </div>
-            <div class="admin-item-actions">
-                <button class="admin-delete-btn" onclick="deleteUser('${doc.id}')">Удалить</button>
-            </div>
-        `;
-        adminUsers.appendChild(userDiv);
-    });
-
-    // Load messages
-    const messagesSnapshot = await db.collection('chat').get();
-    const adminMessages = document.getElementById('adminMessages');
-    adminMessages.innerHTML = '';
-
-    messagesSnapshot.forEach(doc => {
-        const message = doc.data();
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'admin-item';
-        messageDiv.innerHTML = `
-            <div class="admin-item-info">
-                <strong>${message.callsign}:</strong> ${message.message.substring(0, 50)}...
-            </div>
-            <div class="admin-item-actions">
-                <button class="admin-delete-btn" onclick="deleteMessage('${doc.id}')">Удалить</button>
-            </div>
-        `;
-        adminMessages.appendChild(messageDiv);
-    });
-
-    // Load items
-    const itemsSnapshot = await db.collection('market').get();
-    const adminItems = document.getElementById('adminItems');
-    adminItems.innerHTML = '';
-
-    itemsSnapshot.forEach(doc => {
-        const item = doc.data();
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'admin-item';
-        itemDiv.innerHTML = `
-            <div class="admin-item-info">
-                <strong>${item.name}</strong> - ${item.price} ₽ (${item.sellerName})
-            </div>
-            <div class="admin-item-actions">
-                <button class="admin-delete-btn" onclick="deleteMarketItem('${doc.id}')">Удалить</button>
-            </div>
-        `;
-        adminItems.appendChild(itemDiv);
+function animateTerminalLines() {
+    const lines = document.querySelectorAll('.log-line');
+    lines.forEach((line, index) => {
+        line.style.animationDelay = `${index * 0.5}s`;
     });
 }
 
-async function deleteUser(userId) {
-    if (!confirm('Удалить этого пользователя?')) return;
-
-    try {
-        await db.collection('users').doc(userId).delete();
-        loadAdminData();
-    } catch (error) {
-        console.error('Delete user error:', error);
+function addGlitchEffect() {
+    const randomElement = document.querySelector('.glitch-text-yellow');
+    if (randomElement) {
+        randomElement.style.animation = 'none';
+        setTimeout(() => {
+            randomElement.style.animation = '';
+        }, 100);
     }
 }
 
-// Modal Functions
-function showModal(modalId) {
-    document.getElementById(modalId).classList.add('show');
+function updateTime() {
+    // Можно добавить обновление времени в интерфейсе
+    console.log('Time updated');
 }
 
-function hideModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
-}
+// Дополнительные эффекты при наведении
+document.addEventListener('mousemove', function(e) {
+    const cards = document.querySelectorAll('.monitor-panel, .location-btn');
+    cards.forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+            card.style.transform = `perspective(1000px) rotateY(${(x - rect.width/2) * 0.01}deg) rotateX(${-(y - rect.height/2) * 0.01}deg)`;
+        } else {
+            card.style.transform = '';
+        }
+    });
+});
 
-// Make functions globally accessible
-window.deleteMessage = deleteMessage;
-window.deleteMarketItem = deleteMarketItem;
-window.deleteUser = deleteUser;
+// Обработка ошибок Firebase
+window.addEventListener('error', function(e) {
+    if (e.message.includes('firebase')) {
+        console.error('Firebase error:', e);
+        // Можно показать пользователю сообщение о проблеме с соединением
+    }
+});
+
+// Экспорт функций для глобального доступа
+window.switchSection = switchSection;
+window.showLocation = showLocation;
+window.closeLocationModal = closeLocationModal;
+window.logout = logout;
+window.sendMessage = sendMessage;

@@ -3,201 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stalker PDA Online</title>
+    <title>СТАЛКЕР ЧАТ - Зона Отчуждения</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Russo+One&display=swap" rel="stylesheet">
 </head>
-<body>
-    <!-- CRT Эффекты -->
-    <div class="crt-effect">
+<body class="industrial-theme">
+    <!-- Эффекты старого телевизора -->
+    <div class="tv-effects">
         <div class="scanlines"></div>
+        <div class="noise-overlay"></div>
+        <div class="vignette"></div>
         <div class="flicker"></div>
     </div>
-
-    <!-- Фиксированное меню -->
-    <nav class="top-menu">
-        <div class="menu-title">PDA SYSTEM v2.0</div>
-        <div class="menu-buttons">
-            <button class="menu-btn" onclick="showPage('chat')">ЧАТ</button>
-            <button class="menu-btn" onclick="showPage('map')">КАРТА</button>
-            <button class="menu-btn" onclick="showPage('market')">ТОРГОВЛЯ</button>
-            <button class="menu-btn" onclick="showPage('profile')">ПРОФИЛЬ</button>
+    
+    <!-- Header -->
+    <header class="industrial-header">
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="stalker-logo">
+                    <span class="logo-text glitch-text-yellow" data-text="СТАЛКЕР ЧАТ">СТАЛКЕР ЧАТ</span>
+                    <div class="radiation-symbol">☢</div>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <ul class="nav-menu">
+                    <li><a href="#home" class="nav-link active" data-section="home">ГЛАВНАЯ</a></li>
+                    <li><a href="#map" class="nav-link" data-section="map">КАРТА</a></li>
+                    <li><a href="#chat" class="nav-link" data-section="chat">ЧАТ</a></li>
+                    <li><a href="#login" class="nav-link" data-section="login">ВХОД</a></li>
+                    <li><a href="#register" class="nav-link highlighted" data-section="register">РЕГИСТРАЦИЯ</a></li>
+                </ul>
+            </nav>
+            <div class="user-section" id="userInfo" style="display: none;">
+                <span class="stalker-name"></span>
+                <button class="logout-btn" onclick="logout()">ВЫЙТИ</button>
+            </div>
         </div>
-        <div class="user-info" id="topUserInfo">
-            <span id="topUserCallsign">ГОСТЬ</span>
-            <button id="authBtn" class="auth-btn">ВОЙТИ</button>
-        </div>
-    </nav>
+    </header>
 
-    <!-- Основной контейнер -->
-    <main class="main-container">
-        
-        <!-- Страница чата -->
-        <section id="chat" class="page active">
-            <div class="terminal-frame">
-                <div class="terminal-header">
-                    <h2>ЧАТ СТАЛКЕРОВ</h2>
-                    <div class="status-indicator online">●</div>
-                </div>
-                <div class="chat-messages" id="chatMessages">
-                    <div class="system-message">Система: Добро пожаловать в PDA чат...</div>
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="messageInput" class="terminal-input" placeholder="> Введите сообщение..." disabled>
-                    <button id="sendMessage" class="terminal-button" disabled>ОТПРАВИТЬ</button>
-                </div>
+    <!-- Основной контент -->
+    <main class="industrial-content">
+        <!-- Главная страница -->
+        <section id="home" class="content-section active">
+            <div class="zone-status-header">
+                <span class="zone-title">СТАТУС ЗОНЫ ОТЧУЖДЕНИЯ</span>
+                <span class="radiation-monitor">РАДИАЦИЯ: <span class="rad-value">0.12</span> мЗв/ч</span>
             </div>
-        </section>
-
-        <!-- Страница карты -->
-        <section id="map" class="page">
-            <div class="terminal-frame">
-                <div class="terminal-header">
-                    <h2>КАРТА ЗОНЫ</h2>
-                    <div class="status-indicator online">●</div>
-                </div>
-                <div class="zone-map" id="zoneMap">
-                    <!-- Локации будут добавлены через JS -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Страница торговли -->
-        <section id="market" class="page">
-            <div class="terminal-frame">
-                <div class="terminal-header">
-                    <h2>РЫНОК АРТЕФАКТОВ</h2>
-                    <div class="status-indicator online">●</div>
-                </div>
-                <div class="market-controls">
-                    <button id="addItemBtn" class="terminal-button" disabled>ДОБАВИТЬ ПРЕДМЕТ</button>
-                </div>
-                <div class="market-items" id="marketItems">
-                    <div class="system-message">Рынок пуст...</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Страница профиля -->
-        <section id="profile" class="page">
-            <div class="terminal-frame">
-                <div class="terminal-header">
-                    <h2>ПРОФИЛЬ СТАЛКЕРА</h2>
-                    <div class="status-indicator online">●</div>
-                </div>
-                <div class="profile-content">
-                    <div class="profile-avatar">
-                        <div class="avatar-placeholder" id="avatarPreview">?</div>
-                        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-                        <button id="uploadAvatarBtn" class="terminal-button" disabled>ЗАГРУЗИТЬ АВАТАР</button>
+            
+            <div class="zone-welcome">
+                <h1 class="zone-title-main glitch-text-yellow" data-text="ЗОНА ОТЧУЖДЕНИЯ">ЗОНА ОТЧУЖДЕНИЯ</h1>
+                <div class="status-monitor-grid">
+                    <div class="monitor-panel rusted">
+                        <h3>СТАТУС ЗОНЫ</h3>
+                        <p class="status-warning">НЕСТАБИЛЬНО</p>
+                        <div class="radiation-bar">
+                            <div class="radiation-fill high"></div>
+                        </div>
                     </div>
-                    <div class="profile-info">
-                        <div class="input-group">
-                            <label>ПОЗЫВНОЙ:</label>
-                            <input type="text" id="nicknameInput" class="terminal-input" placeholder="Введите позывной" disabled>
+                    <div class="monitor-panel rusted">
+                        <h3>АНОМАЛИИ</h3>
+                        <p class="status-danger">КРИТИЧЕСКАЯ АКТИВНОСТЬ</p>
+                        <div class="radiation-bar">
+                            <div class="radiation-fill critical"></div>
                         </div>
-                        <div class="profile-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">СТАТУС:</span>
-                                <span class="stat-value" id="userStatus">ГОСТЬ</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">ДАТА ВХОДА:</span>
-                                <span class="stat-value" id="loginDate">-</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">УРОВЕНЬ:</span>
-                                <select id="rankSelect" class="rank-select" disabled>
-                                    <option value="Новичок">НОВИЧОК</option>
-                                    <option value="Опытный">ОПЫТНЫЙ</option>
-                                    <option value="Ветеран">ВЕТЕРАН</option>
-                                    <option value="Мастер">МАСТЕР</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="profile-actions">
-                            <button id="saveProfileBtn" class="terminal-button" disabled>СОХРАНИТЬ</button>
-                            <button id="logoutBtn" class="terminal-button danger" style="display: none;">ВЫЙТИ</button>
+                    </div>
+                    <div class="monitor-panel rusted">
+                        <h3>ВЫБРОСЫ</h3>
+                        <p class="status-safe">ВЫБРОС БЛИЗКО</p>
+                        <div class="radiation-bar">
+                            <div class="radiation-fill medium"></div>
                         </div>
                     </div>
                 </div>
+                
+                <div class="terminal-log">
+                    <div class="log-line">> Инициализация системы мониторинга...</div>
+                    <div class="log-line">> Сканирование радиационного фона...</div>
+                    <div class="log-line">> Обнаружено: 7 сталкеров в радиусе 2км</div>
+                    <div class="log-line">> ВНИМАНИЕ: Высокая концентрация аномалий</div>
+                    <div class="log-line">> Система готова к работе</div>
+                </div>
             </div>
         </section>
 
+        <!-- Карта локаций -->
+        <section id="map" class="content-section">
+            <div class="zone-status-header">
+                <span class="zone-title">КАРТА ЗОНЫ ОТЧУЖДЕНИЯ</span>
+            </div>
+            
+            <div class="locations-container">
+                <div class="locations-grid-industrial">
+                    <div class="location-btn rusted" data-location="cordon" onclick="showLocation('cordon')">
+                        <span class="location-name">КОРДОН</span>
+                        <span class="location-desc">Вход в Зону</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="garbage" onclick="showLocation('garbage')">
+                        <span class="location-name">СВАЛКА</span>
+                        <span class="location-desc">Промышленная зона</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="agroprom" onclick="showLocation('agroprom')">
+                        <span class="location-name">АГРОПРОМ</span>
+                        <span class="location-desc">Исследовательский комплекс</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="darkvalley" onclick="showLocation('darkvalley')">
+                        <span class="location-name">ТЁМНАЯ ДОЛИНА</span>
+                        <span class="location-desc">Бандитская территория</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="bar" onclick="showLocation('bar')">
+                        <span class="location-name">БАР 100 РЕНТГЕН</span>
+                        <span class="location-desc">Центр сталкеров</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="yantar" onclick="showLocation('yantar')">
+                        <span class="location-name">ЯНТАРЬ</span>
+                        <span class="location-desc">Научная станция</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="military" onclick="showLocation('military')">
+                        <span class="location-name">ВОЕННЫЕ СКЛАДЫ</span>
+                        <span class="location-desc">Охраняемая территория</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="pripyat" onclick="showLocation('pripyat')">
+                        <span class="location-name">ПРИПЯТЬ</span>
+                        <span class="location-desc">Мёртвый город</span>
+                    </div>
+                    
+                    <div class="location-btn rusted" data-location="chernobyl" onclick="showLocation('chernobyl')">
+                        <span class="location-name">ЧАЭС</span>
+                        <span class="location-desc">Сердце Зоны</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Чат -->
+        <section id="chat" class="content-section">
+            <div class="zone-status-header">
+                <span class="zone-title">СВЯЗЬ С СТАЛКЕРАМИ</span>
+                <span class="connection-status">СТАТУС: <span class="status-online">ОНЛАЙН</span></span>
+            </div>
+            
+            <div class="terminal-chat">
+                <div class="chat-log" id="chatMessages">
+                    <div class="system-log">
+                        <span class="log-time">[00:00:00]</span>
+                        <span class="log-text">Система связи инициализирована</span>
+                    </div>
+                </div>
+                
+                <div class="chat-terminal" id="chatInputContainer">
+                    <div class="terminal-input-wrapper">
+                        <input type="text" id="messageInput" class="terminal-input" placeholder="> Введите сообщение..." disabled>
+                        <button id="sendBtn" class="terminal-send-btn" onclick="sendMessage()" disabled>ОТПРАВИТЬ</button>
+                    </div>
+                    <div class="auth-alert" id="authWarning">
+                        Для отправки сообщений необходима авторизация
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Вход -->
+        <section id="login" class="content-section">
+            <div class="zone-status-header">
+                <span class="zone-title">АВТОРИЗАЦИЯ В СИСТЕМЕ</span>
+            </div>
+            
+            <div class="metal-panel-container">
+                <form id="loginForm" class="metal-panel">
+                    <div class="input-group">
+                        <label for="loginEmail">EMAIL:</label>
+                        <input type="email" id="loginEmail" class="metal-input" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="loginPassword">ПАРОЛЬ:</label>
+                        <input type="password" id="loginPassword" class="metal-input" required>
+                    </div>
+                    
+                    <button type="submit" class="metal-button">ВОЙТИ В СИСТЕМУ</button>
+                </form>
+                
+                <div class="auth-switch-metal">
+                    <p>Нет аккаунта? <a href="#register" class="metal-link" onclick="switchSection('register')">Зарегаться</a></p>
+                </div>
+                
+                <div id="loginError" class="error-panel" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Регистрация -->
+        <section id="register" class="content-section">
+            <div class="zone-status-header">
+                <span class="zone-title">РЕГИСТРАЦИЯ НОВОГО СТАЛКЕРА</span>
+            </div>
+            
+            <div class="metal-panel-container">
+                <form id="registerForm" class="metal-panel">
+                    <div class="input-group">
+                        <label for="registerUsername">ИМЯ СТАЛКЕРА:</label>
+                        <input type="text" id="registerUsername" class="metal-input" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="registerEmail">EMAIL:</label>
+                        <input type="email" id="registerEmail" class="metal-input" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="registerPassword">ПАРОЛЬ:</label>
+                        <input type="password" id="registerPassword" class="metal-input" required>
+                    </div>
+                    
+                    <button type="submit" class="metal-button">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+                </form>
+                
+                <div class="auth-switch-metal">
+                    <p>Уже есть аккаунт? <a href="#login" class="metal-link" onclick="switchSection('login')">Войти</a></p>
+                </div>
+                
+                <div id="registerError" class="error-panel" style="display: none;"></div>
+            </div>
+        </section>
     </main>
 
-    <!-- Модальные окна -->
-    <div id="modalOverlay" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">ЗАГОЛОВОК</h3>
-                <button class="modal-close" onclick="closeModal()">×</button>
+    <!-- Модальное окно локации -->
+    <div id="locationModal" class="industrial-modal">
+        <div class="metal-modal-content">
+            <div class="metal-modal-header">
+                <h2 id="locationTitle" class="metal-modal-title"></h2>
+                <button class="metal-modal-close" onclick="closeLocationModal()">✕</button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Контент модалки -->
-            </div>
-            <div class="modal-footer" id="modalFooter">
-                <!-- Кнопки модалки -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Экран авторизации -->
-    <div id="authScreen" class="auth-screen">
-        <div class="auth-container">
-            <div class="auth-frame">
-                <div class="auth-header">
-                    <h1 class="auth-title">PDA SYSTEM</h1>
-                    <div class="auth-subtitle">ВХОД В ЗОНУ</div>
-                </div>
-                
-                <!-- Экран входа -->
-                <div id="loginForm" class="auth-form active">
-                    <div class="input-group">
-                        <label for="loginEmail">EMAIL</label>
-                        <input type="email" id="loginEmail" class="terminal-input" placeholder="Введите email">
+            <div class="metal-modal-body">
+                <img id="locationImage" class="location-photo" src="" alt="">
+                <p id="locationDescription" class="location-text"></p>
+                <div class="location-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">ОПАСНОСТЬ:</span>
+                        <span id="locationDanger" class="stat-value"></span>
                     </div>
-                    <div class="input-group">
-                        <label for="loginPassword">ПАРОЛЬ</label>
-                        <input type="password" id="loginPassword" class="terminal-input" placeholder="Введите пароль">
+                    <div class="stat-item">
+                        <span class="stat-label">АРТЕФАКТЫ:</span>
+                        <span id="locationArtifacts" class="stat-value"></span>
                     </div>
-                    <button id="loginSubmit" class="auth-button">ВОЙТИ</button>
-                    <div class="auth-switch">
-                        <span>Нет аккаунта? <a href="#" id="switchToRegister" class="auth-link">ЗАРЕГИСТРИРОВАТЬСЯ</a></span>
+                    <div class="stat-item">
+                        <span class="stat-label">МУТАНТЫ:</span>
+                        <span id="locationMutants" class="stat-value"></span>
                     </div>
                 </div>
-                
-                <!-- Экран регистрации -->
-                <div id="registerForm" class="auth-form">
-                    <div class="input-group">
-                        <label for="registerCallsign">ПОЗЫВНОЙ</label>
-                        <input type="text" id="registerCallsign" class="terminal-input" placeholder="Ваш позывной в Зоне">
-                    </div>
-                    <div class="input-group">
-                        <label for="registerEmail">EMAIL</label>
-                        <input type="email" id="registerEmail" class="terminal-input" placeholder="Введите email">
-                    </div>
-                    <div class="input-group">
-                        <label for="registerPassword">ПАРОЛЬ</label>
-                        <input type="password" id="registerPassword" class="terminal-input" placeholder="Минимум 6 символов">
-                    </div>
-                    <button id="registerSubmit" class="auth-button">СОЗДАТЬ АККАУНТ</button>
-                    <div class="auth-switch">
-                        <span>Уже есть аккаунт? <a href="#" id="switchToLogin" class="auth-link">ВОЙТИ</a></span>
-                    </div>
-                </div>
-                
-                <div class="auth-error" id="authError"></div>
             </div>
         </div>
     </div>
 
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
-    <script src="app-spa.js"></script>
+    <!-- Основной скрипт -->
+    <script src="app.js"></script>
 </body>
 </html>
