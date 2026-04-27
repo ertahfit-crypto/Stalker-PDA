@@ -180,12 +180,16 @@ function checkAuthState() {
 }
 
 function updateUserInterface(user) {
-    const userInfo = document.getElementById('userInfo');
-    const username = userInfo.querySelector('.stalker-name');
+    const profileSection = document.getElementById('profileSection');
+    const authButtons = document.getElementById('authButtons');
     
     if (user) {
-        username.textContent = user.displayName || user.email;
-        userInfo.style.display = 'flex';
+        // Показываем профиль
+        profileSection.style.display = 'flex';
+        authButtons.style.display = 'none';
+        
+        // Обновляем данные профиля
+        updateProfileData(user);
         
         // Разблокируем чат
         const messageInput = document.getElementById('messageInput');
@@ -201,7 +205,9 @@ function updateUserInterface(user) {
             initializeChat();
         }
     } else {
-        userInfo.style.display = 'none';
+        // Показываем кнопки авторизации
+        profileSection.style.display = 'none';
+        authButtons.style.display = 'flex';
         
         // Блокируем чат
         const messageInput = document.getElementById('messageInput');
@@ -218,6 +224,17 @@ function updateUserInterface(user) {
             chatListener = null;
         }
     }
+}
+
+function updateProfileData(user) {
+    const nickname = user.displayName || user.email.split('@')[0] || 'Stalker';
+    const userNickname = document.getElementById('userNickname');
+    const profileName = document.getElementById('profileName');
+    const nicknameInput = document.getElementById('nicknameInput');
+    
+    if (userNickname) userNickname.textContent = nickname;
+    if (profileName) profileName.textContent = nickname;
+    if (nicknameInput) nicknameInput.value = nickname;
 }
 
 async function login() {
@@ -450,9 +467,177 @@ window.addEventListener('error', function(e) {
     }
 });
 
+// Функции профиля
+function toggleProfileDropdown() {
+    const profileSection = document.getElementById('profileSection');
+    const profileMenu = document.getElementById('profileMenu');
+    
+    if (profileMenu.classList.contains('show')) {
+        profileMenu.classList.remove('show');
+        profileSection.classList.remove('active');
+    } else {
+        profileMenu.classList.add('show');
+        profileSection.classList.add('active');
+    }
+}
+
+// Закрытие dropdown при клике вне его
+document.addEventListener('click', function(e) {
+    const profileSection = document.getElementById('profileSection');
+    const profileMenu = document.getElementById('profileMenu');
+    
+    if (!profileSection.contains(e.target)) {
+        profileMenu.classList.remove('show');
+        profileSection.classList.remove('active');
+    }
+});
+
+function openProfileSettings() {
+    switchSection('profile-settings');
+    toggleProfileDropdown();
+}
+
+function openSettings() {
+    showSystemMessage('Раздел "Настройки" в разработке');
+    toggleProfileDropdown();
+}
+
+function openSecurity() {
+    showSystemMessage('Раздел "Безопасность" в разработке');
+    toggleProfileDropdown();
+}
+
+function openMessages() {
+    switchSection('chat');
+    toggleProfileDropdown();
+}
+
+function openAchievements() {
+    showSystemMessage('Раздел "Достижения" в разработке');
+    toggleProfileDropdown();
+}
+
+// Настройки профиля
+function updateNickname() {
+    const newNickname = document.getElementById('nicknameInput').value.trim();
+    if (!newNickname) {
+        showSystemMessage('Ник не может быть пустым');
+        return;
+    }
+    
+    if (currentUser) {
+        currentUser.updateProfile({
+            displayName: newNickname
+        }).then(() => {
+            updateProfileData(currentUser);
+            showSystemMessage('Ник успешно изменён');
+        }).catch(error => {
+            showSystemMessage('Ошибка изменения ника: ' + error.message);
+        });
+    }
+}
+
+function saveProfileSettings() {
+    const nickname = document.getElementById('nicknameInput').value.trim();
+    const status = document.getElementById('statusSelect').value;
+    const about = document.getElementById('aboutInput').value.trim();
+    
+    if (!nickname) {
+        showSystemMessage('Ник не может быть пустым');
+        return;
+    }
+    
+    // Сохраняем в localStorage для демо
+    localStorage.setItem('stalkerProfile', JSON.stringify({
+        nickname: nickname,
+        status: status,
+        about: about,
+        level: 12,
+        xp: 650
+    }));
+    
+    // Обновляем displayName в Firebase
+    if (currentUser) {
+        currentUser.updateProfile({
+            displayName: nickname
+        }).then(() => {
+            updateProfileData(currentUser);
+            showSystemMessage('Настройки профиля сохранены');
+        }).catch(error => {
+            showSystemMessage('Ошибка сохранения: ' + error.message);
+        });
+    } else {
+        showSystemMessage('Настройки профиля сохранены локально');
+    }
+}
+
+function resetAvatar() {
+    const avatarPreview = document.getElementById('avatarPreview');
+    const userAvatar = document.getElementById('userAvatar');
+    const userAvatarLarge = document.getElementById('userAvatarLarge');
+    
+    const defaultAvatar = 'https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S';
+    
+    if (avatarPreview) avatarPreview.src = defaultAvatar;
+    if (userAvatar) userAvatar.src = defaultAvatar;
+    if (userAvatarLarge) userAvatarLarge.src = defaultAvatar;
+    
+    showSystemMessage('Аватар сброшен');
+}
+
+// Загрузка аватара
+document.getElementById('avatarInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const avatarPreview = document.getElementById('avatarPreview');
+            const userAvatar = document.getElementById('userAvatar');
+            const userAvatarLarge = document.getElementById('userAvatarLarge');
+            
+            const avatarUrl = e.target.result;
+            
+            if (avatarPreview) avatarPreview.src = avatarUrl;
+            if (userAvatar) userAvatar.src = avatarUrl;
+            if (userAvatarLarge) userAvatarLarge.src = avatarUrl;
+            
+            showSystemMessage('Аватар загружен');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Загрузка сохранённых настроек при загрузке страницы
+window.addEventListener('load', function() {
+    const savedProfile = localStorage.getItem('stalkerProfile');
+    if (savedProfile) {
+        const profile = JSON.parse(savedProfile);
+        const nicknameInput = document.getElementById('nicknameInput');
+        const statusSelect = document.getElementById('statusSelect');
+        const aboutInput = document.getElementById('aboutInput');
+        const userLevel = document.getElementById('userLevel');
+        const xpFill = document.getElementById('xpFill');
+        
+        if (nicknameInput) nicknameInput.value = profile.nickname;
+        if (statusSelect) statusSelect.value = profile.status;
+        if (aboutInput) aboutInput.value = profile.about;
+        if (userLevel) userLevel.textContent = profile.level;
+        if (xpFill) xpFill.style.width = (profile.xp % 100) + '%';
+    }
+});
+
 // Экспорт функций для глобального доступа
 window.switchSection = switchSection;
 window.showLocation = showLocation;
 window.closeLocationModal = closeLocationModal;
 window.logout = logout;
 window.sendMessage = sendMessage;
+window.toggleProfileDropdown = toggleProfileDropdown;
+window.openProfileSettings = openProfileSettings;
+window.openSettings = openSettings;
+window.openSecurity = openSecurity;
+window.openMessages = openMessages;
+window.openAchievements = openAchievements;
+window.updateNickname = updateNickname;
+window.saveProfileSettings = saveProfileSettings;
+window.resetAvatar = resetAvatar;

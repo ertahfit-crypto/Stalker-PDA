@@ -30,13 +30,72 @@
                     <li><a href="#home" class="nav-link active" data-section="home">ГЛАВНАЯ</a></li>
                     <li><a href="#map" class="nav-link" data-section="map">КАРТА</a></li>
                     <li><a href="#chat" class="nav-link" data-section="chat">ЧАТ</a></li>
-                    <li><a href="#login" class="nav-link" data-section="login">ВХОД</a></li>
-                    <li><a href="#register" class="nav-link highlighted" data-section="register">РЕГИСТРАЦИЯ</a></li>
                 </ul>
             </nav>
-            <div class="user-section" id="userInfo" style="display: none;">
-                <span class="stalker-name"></span>
-                <button class="logout-btn" onclick="logout()">ВЫЙТИ</button>
+            
+            <!-- Профиль пользователя -->
+            <div class="profile-section" id="profileSection" style="display: none;">
+                <div class="profile-dropdown" onclick="toggleProfileDropdown()">
+                    <div class="profile-avatar">
+                        <img src="https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S" alt="Avatar" id="userAvatar">
+                    </div>
+                    <div class="profile-info">
+                        <span class="profile-nickname" id="userNickname">Stalker_Zone</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                </div>
+                
+                <!-- Dropdown меню профиля -->
+                <div class="profile-menu" id="profileMenu">
+                    <div class="profile-header">
+                        <div class="profile-avatar-large">
+                            <img src="https://via.placeholder.com/80x80/d4a017/0b0b0b?text=S" alt="Avatar" id="userAvatarLarge">
+                        </div>
+                        <div class="profile-details">
+                            <h3 class="profile-name" id="profileName">Stalker_Zone</h3>
+                            <p class="profile-status" id="profileStatus">Опытный сталкер</p>
+                            <div class="profile-level">
+                                <span class="level-text">УРОВЕНЬ <span id="userLevel">12</span></span>
+                                <div class="xp-bar">
+                                    <div class="xp-fill" id="xpFill" style="width: 65%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-nav">
+                        <a href="#" class="profile-nav-item" onclick="openProfileSettings()">
+                            <span class="nav-icon">👤</span>
+                            <span>Профиль</span>
+                        </a>
+                        <a href="#" class="profile-nav-item" onclick="openSettings()">
+                            <span class="nav-icon">⚙️</span>
+                            <span>Настройки</span>
+                        </a>
+                        <a href="#" class="profile-nav-item" onclick="openSecurity()">
+                            <span class="nav-icon">🔒</span>
+                            <span>Безопасность</span>
+                        </a>
+                        <a href="#" class="profile-nav-item" onclick="openMessages()">
+                            <span class="nav-icon">💬</span>
+                            <span>Мои сообщения</span>
+                        </a>
+                        <a href="#" class="profile-nav-item" onclick="openAchievements()">
+                            <span class="nav-icon">🏆</span>
+                            <span>Достижения</span>
+                        </a>
+                    </div>
+                    
+                    <div class="profile-footer">
+                        <button class="logout-profile-btn" onclick="logout()">ВЫЙТИ ИЗ АККАУНТА</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Кнопки для неавторизованных -->
+            <div class="auth-buttons" id="authButtons">
+                <button class="auth-nav-btn" onclick="switchSection('login')">ВХОД</button>
+                <button class="auth-nav-btn highlighted" onclick="switchSection('register')">РЕГИСТРАЦИЯ</button>
             </div>
         </div>
     </header>
@@ -229,6 +288,62 @@
                 </div>
                 
                 <div id="registerError" class="error-panel" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Настройки профиля -->
+        <section id="profile-settings" class="content-section">
+            <div class="zone-status-header">
+                <span class="zone-title">НАСТРОЙКИ ПРОФИЛЯ</span>
+            </div>
+            
+            <div class="metal-panel-container">
+                <div class="profile-settings-panel">
+                    <!-- Аватар -->
+                    <div class="settings-section">
+                        <h3 class="settings-title">АВАТАР</h3>
+                        <div class="avatar-upload">
+                            <div class="avatar-preview">
+                                <img src="https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S" alt="Avatar Preview" id="avatarPreview">
+                            </div>
+                            <div class="avatar-controls">
+                                <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                                <button class="metal-button" onclick="document.getElementById('avatarInput').click()">ВЫБРАТЬ АВАТАР</button>
+                                <button class="metal-button secondary" onclick="resetAvatar()">СБРОСИТЬ</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Основная информация -->
+                    <div class="settings-section">
+                        <h3 class="settings-title">ОСНОВНАЯ ИНФОРМАЦИЯ</h3>
+                        <div class="input-group">
+                            <label for="nicknameInput">НИК СТАЛКЕРА:</label>
+                            <input type="text" id="nicknameInput" class="metal-input" value="Stalker_Zone">
+                            <button class="metal-button" onclick="updateNickname()">ИЗМЕНИТЬ</button>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="statusSelect">СТАТУС:</label>
+                            <select id="statusSelect" class="metal-input">
+                                <option value="Новичок">Новичок</option>
+                                <option value="Опытный сталкер" selected>Опытный сталкер</option>
+                                <option value="Ветеран Зоны">Ветеран Зоны</option>
+                                <option value="Легенда">Легенда</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="aboutInput">О СЕБЕ:</label>
+                            <textarea id="aboutInput" class="metal-input" rows="4" placeholder="Расскажи о себе...">Ищу артефакты в Зоне уже 3 года. Помогу новичкам.</textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Сохранение -->
+                    <div class="settings-section">
+                        <button class="metal-button save-btn" onclick="saveProfileSettings()">СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
