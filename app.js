@@ -23,7 +23,7 @@ const locations = {
     cordon: {
         name: "Кордон",
         description: "Вход в Зону. Первое, что видят новички. Здесь находятся лагерь новичков и пост военных. Относительно безопасное место, но beware - мутанты и бандиты не дремлют. Идеальное место для старта.",
-        image: "https://stalker-news.info/wp-content/uploads/2023/12/kordon.jpg",
+        image: "blob:https://gemini.google.com/20ff9b8b-14f7-4880-8938-4e715af50f02",
         danger: "НИЗКАЯ",
         artifacts: "ОБЫЧНЫЕ",
         mutants: "СВИНЬИ, ПСЫ"
@@ -31,15 +31,15 @@ const locations = {
     garbage: {
         name: "Свалка",
         description: "Промышленная зона с кучами металлолома. Бандиты считают это своей территорией. Множество аномалий и артефактов. Здесь можно найти хорошие вещи, если сможешь отбиться от бандитов.",
-        image: "https://preview.redd.it/lc8dnz55n9o91.jpg?width=640&crop=smart&auto=webp&s=14389ce87683a0733b8399614f31623e2afc781b",
+        image: "blob:https://gemini.google.com/3b2e0071-c983-4303-b347-5a6456644fb7",
         danger: "СРЕДНЯЯ",
         artifacts: "ХОРОШИЕ",
         mutants: "СВИНЬИ, ПЛЕСЕНЬ"
-
-    agroprom: {  },
+    },
+    agroprom: {
         name: "Агропром",
         description: "Подземный исследовательский комплекс. Множество секретов и опасностей. Здесь проводились эксперименты, которые привели к появлению странных созданий. Очень опасно для неподготовленных сталкеров.",
-        image: "https://images.steamusercontent.com/ugc/2406697825693633480/D9EAF147E3439F19B1C515EBF1C9109192A0ED76/?imw=637&imh=358&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=АГРОПРОМ",
         danger: "ВЫСОКАЯ",
         artifacts: "РЕДКИЕ",
         mutants: "КРОВОСОСЫ, СНОРКИ"
@@ -47,7 +47,7 @@ const locations = {
     darkvalley: {
         name: "Тёмная долина",
         description: "Территория контролируемая бандитами. Старый завод и заброшенные деревни. Множество укрытий и тайников. Не лучшее место для одиноких сталкеров.",
-        image: "https://static.wikia.nocookie.net/stalker/images/8/8d/Ss_vector_07-07-21_13-39-24_%28l04_darkvalley%29.jpg/revision/latest/scale-to-width-down/1200?cb=20210707125948&path-prefix=ru",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ТЁМНАЯ ДОЛИНА",
         danger: "СРЕДНЯЯ",
         artifacts: "ОБЫЧНЫЕ",
         mutants: "ЗОМБИ, ПСЫ"
@@ -55,7 +55,7 @@ const locations = {
     bar: {
         name: "Бар 100 Рентген",
         description: "Центральная точка для всех сталкеров. Здесь можно найти работу, информацию и отдохнуть. Бармен - лучший источник слухов. Здесь собираются все группировки.",
-        image: "https://stalker-news.info/wp-content/uploads/2025/01/vlx-berzin-100rads2-1.jpg",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=БАР",
         danger: "НИЗКАЯ",
         artifacts: "НЕТ",
         mutants: "НЕТ"
@@ -63,7 +63,7 @@ const locations = {
     yantar: {
         name: "Янтарь",
         description: "Научная станция посреди болот. Высокий уровень радиации и психоактивных выбросов. Ученые изучают Зону, но им постоянно нужна помощь. Множество уникальных аномалий.",
-        image: "https://i.ytimg.com/vi/5ayHBZxv3UQ/maxresdefault.jpg",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ЯНТАРЬ",
         danger: "ВЫСОКАЯ",
         artifacts: "УНИКАЛЬНЫЕ",
         mutants: "ЗОМБИ, КОНТРОЛЛЕР"
@@ -71,7 +71,7 @@ const locations = {
     military: {
         name: "Военные склады",
         description: "Охраняемая территория военных. Хорошее снаряжение, но очень опасно. Военные стреляют без предупреждения. Только опытные сталкеры решаются сюда заходить.",
-        image: "https://it-blok.com.ua/image/catalog/blog/2025/stalker2/%20%D1%81%D0%BA%D0%BB%D0%B0%D0%B4%D1%8B%20%D0%A1%D1%82%D0%B0%D0%BB%D0%BA%D0%B5%D1%80%202.png",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ВОЕННЫЕ СКЛАДЫ",
         danger: "ЭКСТРЕМАЛЬНАЯ",
         artifacts: "ОТЛИЧНЫЕ",
         mutants: "НЕТ"
@@ -79,7 +79,7 @@ const locations = {
     pripyat: {
         name: "Припять",
         description: "Мёртвый город-призрак. Когда-то здесь жили семьи ученых и работников ЧАЭС. Теперь - логово монстров и место последнего испытания для сталкеров. Очень высокая радиация.",
-        image: "https://www.forumdaily.com/wp-content/uploads/2020/10/shutterstock_1429501451.jpg",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ПРИПЯТЬ",
         danger: "ЭКСТРЕМАЛЬНАЯ",
         artifacts: "УНИКАЛЬНЫЕ",
         mutants: "ЧЕРНОПЫХ, БЮВЕР"
@@ -87,7 +87,7 @@ const locations = {
     chernobyl: {
         name: "ЧАЭС",
         description: "Сердце Зоны. Самый опасный и самый таинственный участок. Здесь находится Изгнанник и Монолит. Никто не знает, что скрывается в саркофаге. Легендарное место.",
-        image: "https://ichef.bbci.co.uk/ace/ws/640/cpsprodpb/b186/live/e4a75b80-8198-11ef-be07-011731192d6e.jpg.webp",
+        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ЧАЭС",
         danger: "ЛЕТАЛЬНАЯ",
         artifacts: "ЛЕГЕНДАРНЫЕ",
         mutants: "МОНОЛИТ, ИЗГНАННИК"
