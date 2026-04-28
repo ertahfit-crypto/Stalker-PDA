@@ -1648,6 +1648,7 @@ body {
         flex-direction: column;
         padding: 20px;
         box-shadow: -5px 0 30px rgba(212, 160, 23, 0.3);
+        display: flex;
     }
 
     .profile-section.active {
@@ -1659,17 +1660,13 @@ body {
     }
     
     .profile-menu {
-        display: block;
+        display: block !important;
         position: static;
         width: 100%;
         border: none;
         margin: 0;
         box-shadow: none;
         animation: none;
-    }
-    
-    .profile-menu.show {
-        display: block;
     }
     
     /* Mobile hamburger menu button */
