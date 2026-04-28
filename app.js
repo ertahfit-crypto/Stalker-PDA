@@ -210,11 +210,7 @@ function updateUserInterface(user) {
 
     if (user) {
         // Показываем профиль
-        if (window.innerWidth > 480) {
-            profileSection.style.display = 'flex';
-        } else {
-            profileSection.style.display = '';
-        }
+        profileSection.style.display = 'flex';
         authButtons.style.display = 'none';
 
         // Загружаем профиль пользователя из Firestore
@@ -613,23 +609,14 @@ function toggleProfileDropdown() {
 // Мобильное меню профиля
 function toggleMobileProfile() {
     const profileSection = document.getElementById('profileSection');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const mobileCloseBtn = document.querySelector('.mobile-close-btn');
     const mobileOverlay = document.getElementById('mobileOverlay');
-    const profileMenu = document.getElementById('profileMenu');
 
     if (profileSection.classList.contains('active')) {
         profileSection.classList.remove('active');
-        if (mobileMenuBtn) mobileMenuBtn.style.display = 'block';
-        if (mobileCloseBtn) mobileCloseBtn.style.display = 'none';
         if (mobileOverlay) mobileOverlay.classList.remove('active');
-        if (profileMenu) profileMenu.classList.remove('show');
     } else {
         profileSection.classList.add('active');
-        if (mobileMenuBtn) mobileMenuBtn.style.display = 'none';
-        if (mobileCloseBtn) mobileCloseBtn.style.display = 'block';
         if (mobileOverlay) mobileOverlay.classList.add('active');
-        if (profileMenu) profileMenu.classList.add('show');
     }
 }
 

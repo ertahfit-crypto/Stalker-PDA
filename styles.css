@@ -1635,24 +1635,24 @@ body {
     
     /* Mobile profile drawer */
     .profile-section {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 320px;
-        height: 100vh;
-        background: linear-gradient(135deg, rgba(27, 27, 27, 0.98), rgba(11, 11, 11, 0.99));
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        width: 320px !important;
+        height: 100vh !important;
+        background: linear-gradient(135deg, rgba(27, 27, 27, 0.98), rgba(11, 11, 11, 0.99)) !important;
         border-left: 2px solid var(--border-yellow);
-        z-index: 2000;
-        transform: translateX(100%);
+        z-index: 1001;
+        transform: translateX(100%) !important;
         transition: transform 0.3s ease;
         flex-direction: column;
         padding: 20px;
         box-shadow: -5px 0 30px rgba(212, 160, 23, 0.3);
-        display: flex;
+        display: flex !important;
     }
 
     .profile-section.active {
-        transform: translateX(0);
+        transform: translateX(0) !important;
     }
     
     .profile-dropdown {
@@ -1667,6 +1667,8 @@ body {
         margin: 0;
         box-shadow: none;
         animation: none;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     /* Mobile hamburger menu button */
@@ -1675,7 +1677,7 @@ body {
         position: fixed;
         top: 20px;
         right: 20px;
-        z-index: 2001;
+        z-index: 1002;
         background: linear-gradient(135deg, rgba(212, 160, 23, 0.3), rgba(212, 160, 23, 0.4));
         border: 2px solid var(--border-yellow);
         color: var(--dirty-yellow);
@@ -1793,7 +1795,7 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 1999;
+    z-index: 1000;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
