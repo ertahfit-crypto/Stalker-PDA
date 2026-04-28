@@ -33,7 +33,7 @@ const locations = {
     garbage: {
         name: "Свалка",
         description: "Промышленная зона с кучами металлолома. Бандиты считают это своей территорией. Множество аномалий и артефактов. Здесь можно найти хорошие вещи, если сможешь отбиться от бандитов.",
-        image: "blob:https://gemini.google.com/3b2e0071-c983-4303-b347-5a6456644fb7",
+        image: "https://i.ytimg.com/vi/vmvo78KMk5E/sddefault.jpg",
         danger: "СРЕДНЯЯ",
         artifacts: "ХОРОШИЕ",
         mutants: "СВИНЬИ, ПЛЕСЕНЬ"
@@ -41,7 +41,7 @@ const locations = {
     agroprom: {
         name: "Агропром",
         description: "Подземный исследовательский комплекс. Множество секретов и опасностей. Здесь проводились эксперименты, которые привели к появлению странных созданий. Очень опасно для неподготовленных сталкеров.",
-        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=АГРОПРОМ",
+        image: "https://images.steamusercontent.com/ugc/2406697825693633480/D9EAF147E3439F19B1C515EBF1C9109192A0ED76/?imw=637&imh=358&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true",
         danger: "ВЫСОКАЯ",
         artifacts: "РЕДКИЕ",
         mutants: "КРОВОСОСЫ, СНОРКИ"
@@ -49,7 +49,7 @@ const locations = {
     darkvalley: {
         name: "Тёмная долина",
         description: "Территория контролируемая бандитами. Старый завод и заброшенные деревни. Множество укрытий и тайников. Не лучшее место для одиноких сталкеров.",
-        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ТЁМНАЯ ДОЛИНА",
+        image: "https://storyboom.com.ua/wp-content/uploads/2025/02/image.jpg",
         danger: "СРЕДНЯЯ",
         artifacts: "ОБЫЧНЫЕ",
         mutants: "ЗОМБИ, ПСЫ"
@@ -57,7 +57,7 @@ const locations = {
     bar: {
         name: "Бар 100 Рентген",
         description: "Центральная точка для всех сталкеров. Здесь можно найти работу, информацию и отдохнуть. Бармен - лучший источник слухов. Здесь собираются все группировки.",
-        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=БАР",
+        image: "https://stalker-news.info/wp-content/uploads/2025/01/vlx-berzin-100rads2-1.jpg",
         danger: "НИЗКАЯ",
         artifacts: "НЕТ",
         mutants: "НЕТ"
@@ -65,7 +65,7 @@ const locations = {
     yantar: {
         name: "Янтарь",
         description: "Научная станция посреди болот. Высокий уровень радиации и психоактивных выбросов. Ученые изучают Зону, но им постоянно нужна помощь. Множество уникальных аномалий.",
-        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ЯНТАРЬ",
+        image: "https://i.ytimg.com/vi/5ayHBZxv3UQ/maxresdefault.jpg",
         danger: "ВЫСОКАЯ",
         artifacts: "УНИКАЛЬНЫЕ",
         mutants: "ЗОМБИ, КОНТРОЛЛЕР"
@@ -73,7 +73,7 @@ const locations = {
     military: {
         name: "Военные склады",
         description: "Охраняемая территория военных. Хорошее снаряжение, но очень опасно. Военные стреляют без предупреждения. Только опытные сталкеры решаются сюда заходить.",
-        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ВОЕННЫЕ СКЛАДЫ",
+        image: "https://it-blok.com.ua/image/catalog/blog/2025/stalker2/%20%D1%81%D0%BA%D0%BB%D0%B0%D0%B4%D1%8B%20%D0%A1%D1%82%D0%B0%D0%BB%D0%BA%D0%B5%D1%80%202.png",
         danger: "ЭКСТРЕМАЛЬНАЯ",
         artifacts: "ОТЛИЧНЫЕ",
         mutants: "НЕТ"
@@ -81,7 +81,7 @@ const locations = {
     pripyat: {
         name: "Припять",
         description: "Мёртвый город-призрак. Когда-то здесь жили семьи ученых и работников ЧАЭС. Теперь - логово монстров и место последнего испытания для сталкеров. Очень высокая радиация.",
-        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ПРИПЯТЬ",
+        image: "https://i.ytimg.com/vi/_-iUvHbDc_A/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBMhLZzla9y2SkXczQsJ8SKCe7rdg",
         danger: "ЭКСТРЕМАЛЬНАЯ",
         artifacts: "УНИКАЛЬНЫЕ",
         mutants: "ЧЕРНОПЫХ, БЮВЕР"
@@ -89,7 +89,7 @@ const locations = {
     chernobyl: {
         name: "ЧАЭС",
         description: "Сердце Зоны. Самый опасный и самый таинственный участок. Здесь находится Изгнанник и Монолит. Никто не знает, что скрывается в саркофаге. Легендарное место.",
-        image: "https://via.placeholder.com/600x250/0a0a0a/00ff41?text=ЧАЭС",
+        image: "https://ichef.bbci.co.uk/ace/ws/640/cpsprodpb/B216/production/_123409554_gettyimages-72450926.jpg.webp",
         danger: "ЛЕТАЛЬНАЯ",
         artifacts: "ЛЕГЕНДАРНЫЕ",
         mutants: "МОНОЛИТ, ИЗГНАННИК"
