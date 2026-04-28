@@ -611,15 +611,18 @@ function toggleMobileProfile() {
     const profileSection = document.getElementById('profileSection');
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileCloseBtn = document.querySelector('.mobile-close-btn');
+    const mobileOverlay = document.getElementById('mobileOverlay');
 
     if (profileSection.classList.contains('active')) {
         profileSection.classList.remove('active');
         if (mobileMenuBtn) mobileMenuBtn.style.display = 'block';
         if (mobileCloseBtn) mobileCloseBtn.style.display = 'none';
+        if (mobileOverlay) mobileOverlay.classList.remove('active');
     } else {
         profileSection.classList.add('active');
         if (mobileMenuBtn) mobileMenuBtn.style.display = 'none';
         if (mobileCloseBtn) mobileCloseBtn.style.display = 'block';
+        if (mobileOverlay) mobileOverlay.classList.add('active');
     }
 }
 
@@ -627,7 +630,15 @@ function toggleMobileProfile() {
 document.addEventListener('click', function(e) {
     const profileSection = document.getElementById('profileSection');
     const profileMenu = document.getElementById('profileMenu');
-    
+    const mobileOverlay = document.getElementById('mobileOverlay');
+
+    // Закрытие мобильного drawer при клике вне его
+    if (window.innerWidth <= 480 && mobileOverlay && e.target === mobileOverlay) {
+        toggleMobileProfile();
+        return;
+    }
+
+    // Закрытие dropdown на десктопе
     if (!profileSection.contains(e.target)) {
         profileMenu.classList.remove('show');
         profileSection.classList.remove('active');
