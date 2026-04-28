@@ -17,6 +17,8 @@ const db = firebase.firestore();
 // Глобальные переменные
 let currentUser = null;
 let chatListener = null;
+let userListener = null;
+let userProfile = null;
 
 // Данные о локациях
 const locations = {
@@ -105,12 +107,35 @@ function initializeApp() {
     // Добавляем эффекты при загрузке
     animateRadiationLevel();
     animateTerminalLines();
-    
+
     // Обновляем время каждую минуту
     setInterval(updateTime, 60000);
-    
+
     // Эффект помех периодически
     setInterval(addGlitchEffect, 8000);
+
+    // Показываем кнопку мобильного меню на маленьких экранах
+    checkMobileView();
+    window.addEventListener('resize', checkMobileView);
+}
+
+function checkMobileView() {
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const authButtons = document.getElementById('authButtons');
+
+    if (window.innerWidth <= 480) {
+        if (mobileMenuBtn && currentUser) {
+            mobileMenuBtn.style.display = 'block';
+        }
+        if (authButtons && !currentUser) {
+            authButtons.style.display = 'none';
+        }
+    } else {
+        if (mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+        if (authButtons && !currentUser) {
+            authButtons.style.display = 'flex';
+        }
+    }
 }
 
 function setupEventListeners() {
@@ -182,24 +207,27 @@ function checkAuthState() {
 function updateUserInterface(user) {
     const profileSection = document.getElementById('profileSection');
     const authButtons = document.getElementById('authButtons');
-    
+
     if (user) {
         // Показываем профиль
         profileSection.style.display = 'flex';
         authButtons.style.display = 'none';
-        
-        // Обновляем данные профиля
-        updateProfileData(user);
-        
+
+        // Загружаем профиль пользователя из Firestore
+        loadUserProfile(user);
+
+        // Проверяем мобильное представление
+        checkMobileView();
+
         // Разблокируем чат
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const authWarning = document.getElementById('authWarning');
-        
+
         messageInput.disabled = false;
         sendBtn.disabled = false;
         authWarning.style.display = 'none';
-        
+
         // Инициализируем чат если на странице чата
         if (document.getElementById('chat').classList.contains('active')) {
             initializeChat();
@@ -208,33 +236,91 @@ function updateUserInterface(user) {
         // Показываем кнопки авторизации
         profileSection.style.display = 'none';
         authButtons.style.display = 'flex';
-        
+
+        // Проверяем мобильное представление
+        checkMobileView();
+
         // Блокируем чат
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const authWarning = document.getElementById('authWarning');
-        
+
         messageInput.disabled = true;
         sendBtn.disabled = true;
         authWarning.style.display = 'block';
-        
-        // Отписываемся от чата
+
+        // Отписываемся от чата и профиля
         if (chatListener) {
             chatListener();
             chatListener = null;
         }
+        if (userListener) {
+            userListener();
+            userListener = null;
+        }
+        userProfile = null;
     }
 }
 
-function updateProfileData(user) {
-    const nickname = user.displayName || user.email.split('@')[0] || 'Stalker';
+// Загрузка профиля пользователя из Firestore
+function loadUserProfile(user) {
+    // Создаём или обновляем документ пользователя в Firestore
+    const userRef = db.collection('users').doc(user.uid);
+    
+    // Слушаем изменения профиля в реальном времени
+    userListener = userRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            userProfile = doc.data();
+            updateProfileUI(userProfile);
+        } else {
+            // Создаём профиль если его нет
+            const defaultProfile = {
+                nickname: user.displayName || user.email.split('@')[0] || 'Stalker',
+                avatar: 'https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S',
+                status: 'Новичок',
+                about: '',
+                level: 1,
+                xp: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            userRef.set(defaultProfile);
+            userProfile = defaultProfile;
+            updateProfileUI(userProfile);
+        }
+    }, (error) => {
+        console.error('Ошибка загрузки профиля:', error);
+    });
+}
+
+// Обновление UI профиля
+function updateProfileUI(profile) {
     const userNickname = document.getElementById('userNickname');
     const profileName = document.getElementById('profileName');
+    const profileStatus = document.getElementById('profileStatus');
     const nicknameInput = document.getElementById('nicknameInput');
+    const statusSelect = document.getElementById('statusSelect');
+    const aboutInput = document.getElementById('aboutInput');
+    const userAvatar = document.getElementById('userAvatar');
+    const userAvatarLarge = document.getElementById('userAvatarLarge');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const userLevel = document.getElementById('userLevel');
+    const xpFill = document.getElementById('xpFill');
     
-    if (userNickname) userNickname.textContent = nickname;
-    if (profileName) profileName.textContent = nickname;
-    if (nicknameInput) nicknameInput.value = nickname;
+    if (userNickname) userNickname.textContent = profile.nickname;
+    if (profileName) profileName.textContent = profile.nickname;
+    if (profileStatus) profileStatus.textContent = profile.status;
+    if (nicknameInput) nicknameInput.value = profile.nickname;
+    if (statusSelect) statusSelect.value = profile.status;
+    if (aboutInput) aboutInput.value = profile.about || '';
+    if (userAvatar) userAvatar.src = profile.avatar;
+    if (userAvatarLarge) userAvatarLarge.src = profile.avatar;
+    if (avatarPreview) avatarPreview.src = profile.avatar;
+    if (userLevel) userLevel.textContent = profile.level || 1;
+    if (xpFill) xpFill.style.width = ((profile.xp || 0) % 100) + '%';
+}
+
+function updateProfileData(user) {
+    // Эта функция больше не нужна, используем loadUserProfile
 }
 
 async function login() {
@@ -313,6 +399,7 @@ function initializeChat() {
             
             snapshot.docs.reverse().forEach(doc => {
                 const message = doc.data();
+                message.id = doc.id; // Сохраняем ID для удаления
                 addMessageToChat(message);
             });
             
@@ -329,9 +416,11 @@ function sendMessage() {
     
     const messageData = {
         text: message,
-        user: currentUser.displayName || currentUser.email,
+        user: userProfile?.nickname || currentUser.displayName || currentUser.email,
         userId: currentUser.uid,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        avatar: userProfile?.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        deleted: false
     };
     
     db.collection('chatMessages').add(messageData)
@@ -352,10 +441,29 @@ function addMessageToChat(message) {
         new Date(message.timestamp.toDate()).toLocaleTimeString() : 
         new Date().toLocaleTimeString();
     
+    const isOwnMessage = currentUser && message.userId === currentUser.uid;
+    const isDeleted = message.deleted;
+    
     messageDiv.className = 'user-log';
+    messageDiv.dataset.messageId = message.id;
+    
+    let messageContent = '';
+    if (isDeleted) {
+        messageContent = '<span class="deleted-text">Сообщение удалено</span>';
+    } else {
+        messageContent = `<span class="log-text">${message.text}</span>`;
+    }
+    
     messageDiv.innerHTML = `
         <span class="log-time">[${timestamp}]</span>
-        <span class="log-text">&lt;${message.user}&gt; ${message.text}</span>
+        <div class="message-content-wrapper">
+            <img src="${message.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S'}" class="message-avatar" alt="${message.user}">
+            <div class="message-text-wrapper">
+                <span class="message-nickname">${message.user}</span>
+                ${messageContent}
+            </div>
+            ${isOwnMessage && !isDeleted ? `<button class="delete-message-btn" onclick="deleteMessage('${message.id}')" title="Удалить сообщение">🗑️</button>` : ''}
+        </div>
     `;
     
     chatMessages.appendChild(messageDiv);
@@ -375,6 +483,23 @@ function showSystemMessage(text) {
     
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Удаление сообщения
+function deleteMessage(messageId) {
+    if (!currentUser) return;
+    
+    if (confirm('Вы уверены, что хотите удалить это сообщение?')) {
+        db.collection('chatMessages').doc(messageId).update({
+            deleted: true,
+            deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            showSystemMessage('Сообщение удалено');
+        }).catch(error => {
+            console.error('Ошибка удаления сообщения:', error);
+            showSystemMessage('Ошибка удаления сообщения');
+        });
+    }
 }
 
 // Карта локаций
@@ -471,13 +596,30 @@ window.addEventListener('error', function(e) {
 function toggleProfileDropdown() {
     const profileSection = document.getElementById('profileSection');
     const profileMenu = document.getElementById('profileMenu');
-    
+
     if (profileMenu.classList.contains('show')) {
         profileMenu.classList.remove('show');
         profileSection.classList.remove('active');
     } else {
         profileMenu.classList.add('show');
         profileSection.classList.add('active');
+    }
+}
+
+// Мобильное меню профиля
+function toggleMobileProfile() {
+    const profileSection = document.getElementById('profileSection');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileCloseBtn = document.querySelector('.mobile-close-btn');
+
+    if (profileSection.classList.contains('active')) {
+        profileSection.classList.remove('active');
+        if (mobileMenuBtn) mobileMenuBtn.style.display = 'block';
+        if (mobileCloseBtn) mobileCloseBtn.style.display = 'none';
+    } else {
+        profileSection.classList.add('active');
+        if (mobileMenuBtn) mobileMenuBtn.style.display = 'none';
+        if (mobileCloseBtn) mobileCloseBtn.style.display = 'block';
     }
 }
 
@@ -526,12 +668,13 @@ function updateNickname() {
     }
     
     if (currentUser) {
-        currentUser.updateProfile({
-            displayName: newNickname
+        // Сохраняем в Firestore users collection
+        db.collection('users').doc(currentUser.uid).update({
+            nickname: newNickname
         }).then(() => {
-            updateProfileData(currentUser);
             showSystemMessage('Ник успешно изменён');
         }).catch(error => {
+            console.error('Ошибка изменения ника:', error);
             showSystemMessage('Ошибка изменения ника: ' + error.message);
         });
     }
@@ -547,28 +690,27 @@ function saveProfileSettings() {
         return;
     }
     
-    // Сохраняем в localStorage для демо
-    localStorage.setItem('stalkerProfile', JSON.stringify({
+    if (!currentUser) {
+        showSystemMessage('Необходимо авторизоваться');
+        return;
+    }
+    
+    // Сохраняем в Firestore users collection
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarUrl = avatarPreview ? avatarPreview.src : userProfile?.avatar || 'https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S';
+    
+    db.collection('users').doc(currentUser.uid).update({
         nickname: nickname,
         status: status,
         about: about,
-        level: 12,
-        xp: 650
-    }));
-    
-    // Обновляем displayName в Firebase
-    if (currentUser) {
-        currentUser.updateProfile({
-            displayName: nickname
-        }).then(() => {
-            updateProfileData(currentUser);
-            showSystemMessage('Настройки профиля сохранены');
-        }).catch(error => {
-            showSystemMessage('Ошибка сохранения: ' + error.message);
-        });
-    } else {
-        showSystemMessage('Настройки профиля сохранены локально');
-    }
+        avatar: avatarUrl,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        showSystemMessage('Настройки профиля сохранены');
+    }).catch(error => {
+        console.error('Ошибка сохранения профиля:', error);
+        showSystemMessage('Ошибка сохранения: ' + error.message);
+    });
 }
 
 function resetAvatar() {
@@ -582,7 +724,20 @@ function resetAvatar() {
     if (userAvatar) userAvatar.src = defaultAvatar;
     if (userAvatarLarge) userAvatarLarge.src = defaultAvatar;
     
-    showSystemMessage('Аватар сброшен');
+    // Сохраняем в Firestore если пользователь авторизован
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).update({
+            avatar: defaultAvatar,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            showSystemMessage('Аватар сброшен');
+        }).catch(error => {
+            console.error('Ошибка сброса аватара:', error);
+            showSystemMessage('Ошибка сброса аватара');
+        });
+    } else {
+        showSystemMessage('Аватар сброшен');
+    }
 }
 
 // Загрузка аватара
@@ -601,7 +756,20 @@ document.getElementById('avatarInput').addEventListener('change', function(e) {
             if (userAvatar) userAvatar.src = avatarUrl;
             if (userAvatarLarge) userAvatarLarge.src = avatarUrl;
             
-            showSystemMessage('Аватар загружен');
+            // Сохраняем в Firestore если пользователь авторизован
+            if (currentUser) {
+                db.collection('users').doc(currentUser.uid).update({
+                    avatar: avatarUrl,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    showSystemMessage('Аватар загружен');
+                }).catch(error => {
+                    console.error('Ошибка сохранения аватара:', error);
+                    showSystemMessage('Ошибка сохранения аватара');
+                });
+            } else {
+                showSystemMessage('Аватар загружен (сохранится при авторизации)');
+            }
         };
         reader.readAsDataURL(file);
     }
@@ -609,21 +777,7 @@ document.getElementById('avatarInput').addEventListener('change', function(e) {
 
 // Загрузка сохранённых настроек при загрузке страницы
 window.addEventListener('load', function() {
-    const savedProfile = localStorage.getItem('stalkerProfile');
-    if (savedProfile) {
-        const profile = JSON.parse(savedProfile);
-        const nicknameInput = document.getElementById('nicknameInput');
-        const statusSelect = document.getElementById('statusSelect');
-        const aboutInput = document.getElementById('aboutInput');
-        const userLevel = document.getElementById('userLevel');
-        const xpFill = document.getElementById('xpFill');
-        
-        if (nicknameInput) nicknameInput.value = profile.nickname;
-        if (statusSelect) statusSelect.value = profile.status;
-        if (aboutInput) aboutInput.value = profile.about;
-        if (userLevel) userLevel.textContent = profile.level;
-        if (xpFill) xpFill.style.width = (profile.xp % 100) + '%';
-    }
+    // Убрали localStorage, теперь используем Firestore
 });
 
 // Экспорт функций для глобального доступа
@@ -632,7 +786,9 @@ window.showLocation = showLocation;
 window.closeLocationModal = closeLocationModal;
 window.logout = logout;
 window.sendMessage = sendMessage;
+window.deleteMessage = deleteMessage;
 window.toggleProfileDropdown = toggleProfileDropdown;
+window.toggleMobileProfile = toggleMobileProfile;
 window.openProfileSettings = openProfileSettings;
 window.openSettings = openSettings;
 window.openSecurity = openSecurity;

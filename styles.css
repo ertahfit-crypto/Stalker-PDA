@@ -982,16 +982,79 @@ body {
     background: rgba(27, 27, 27, 0.3);
     border-left: 3px solid var(--dirty-yellow);
     color: var(--text-yellow);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .log-time {
     color: var(--dark-brown);
     font-size: 12px;
     margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.message-content-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border-yellow);
+    flex-shrink: 0;
+}
+
+.message-text-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.message-nickname {
+    color: var(--warning-orange);
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .log-text {
     font-family: 'Share Tech Mono', monospace;
+    word-break: break-word;
+}
+
+.deleted-text {
+    color: var(--dark-brown);
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.delete-message-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.user-log:hover .delete-message-btn {
+    opacity: 1;
+}
+
+.delete-message-btn:hover {
+    transform: scale(1.2);
 }
 
 .chat-terminal {
@@ -1568,5 +1631,187 @@ body {
     
     .metal-modal-body {
         padding: 20px;
+    }
+    
+    /* Mobile profile drawer */
+    .profile-section {
+        position: fixed;
+        top: 0;
+        right: -320px;
+        width: 320px;
+        height: 100vh;
+        background: linear-gradient(135deg, rgba(27, 27, 27, 0.98), rgba(11, 11, 11, 0.99));
+        border-left: 2px solid var(--border-yellow);
+        z-index: 2000;
+        transition: right 0.3s ease;
+        flex-direction: column;
+        padding: 20px;
+        box-shadow: -5px 0 30px rgba(212, 160, 23, 0.3);
+    }
+    
+    .profile-section.active {
+        right: 0;
+    }
+    
+    .profile-dropdown {
+        display: none;
+    }
+    
+    .profile-menu {
+        display: block;
+        position: static;
+        width: 100%;
+        border: none;
+        margin: 0;
+        box-shadow: none;
+        animation: none;
+    }
+    
+    .profile-menu.show {
+        display: block;
+    }
+    
+    /* Mobile hamburger menu button */
+    .mobile-menu-btn {
+        display: block;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 2001;
+        background: linear-gradient(135deg, rgba(212, 160, 23, 0.3), rgba(212, 160, 23, 0.4));
+        border: 2px solid var(--border-yellow);
+        color: var(--dirty-yellow);
+        padding: 12px 16px;
+        font-size: 20px;
+        cursor: pointer;
+        border-radius: 8px;
+    }
+    
+    .mobile-menu-btn:hover {
+        background: rgba(212, 160, 23, 0.5);
+        box-shadow: 0 0 15px rgba(212, 160, 23, 0.4);
+    }
+    
+    /* Mobile chat */
+    .terminal-chat {
+        width: 100%;
+        max-width: none;
+        height: calc(100vh - 200px);
+        border-radius: 0;
+    }
+    
+    .chat-log {
+        padding: 15px;
+    }
+    
+    .chat-terminal {
+        padding: 15px;
+    }
+    
+    .terminal-input-wrapper {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .terminal-input {
+        padding: 16px;
+        font-size: 16px;
+        min-height: 50px;
+    }
+    
+    .terminal-send-btn {
+        padding: 16px;
+        font-size: 16px;
+        min-height: 50px;
+    }
+    
+    .message-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .message-nickname {
+        font-size: 11px;
+    }
+    
+    .delete-message-btn {
+        font-size: 14px;
+    }
+    
+    /* Mobile header */
+    .industrial-header {
+        padding: 15px 0;
+    }
+    
+    .header-container {
+        padding: 0 15px;
+    }
+    
+    .logo-text {
+        font-size: 20px;
+    }
+    
+    .radiation-symbol {
+        font-size: 24px;
+    }
+    
+    /* Mobile profile settings */
+    .profile-settings-panel {
+        padding: 0;
+    }
+    
+    .settings-section {
+        padding: 20px;
+        border-radius: 0;
+    }
+    
+    .avatar-upload {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .avatar-controls {
+        width: 100%;
+        align-items: center;
+    }
+    
+    .metal-button {
+        padding: 16px;
+        font-size: 14px;
+    }
+}
+
+/* Mobile menu button (hidden on desktop) */
+.mobile-menu-btn {
+    display: none;
+}
+
+.mobile-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: 1px solid var(--border-yellow);
+    color: var(--dirty-yellow);
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.mobile-close-btn:hover {
+    background: rgba(212, 160, 23, 0.2);
+    transform: rotate(90deg);
+}
+
+@media (max-width: 480px) {
+    .mobile-close-btn {
+        display: flex;
     }
 }
