@@ -1636,11 +1636,11 @@ body {
     /* Mobile profile drawer */
     .profile-section {
         position: fixed !important;
-        top: 0 !important;
         right: 0 !important;
-        width: 320px !important;
-        height: 100vh !important;
-        background: linear-gradient(135deg, rgba(27, 27, 27, 0.98), rgba(11, 11, 11, 0.99)) !important;
+        top: 0 !important;
+        width: 300px !important;
+        height: 100% !important;
+        background: var(--near-black) !important;
         border-left: 2px solid var(--border-yellow);
         z-index: 1001;
         transform: translateX(100%) !important;
@@ -1796,14 +1796,11 @@ body {
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
     z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    display: none;
 }
 
 .mobile-overlay.active {
-    opacity: 1;
-    visibility: visible;
+    display: block;
 }
 
 .mobile-close-btn {

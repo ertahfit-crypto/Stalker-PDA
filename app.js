@@ -625,10 +625,18 @@ document.addEventListener('click', function(e) {
     const profileSection = document.getElementById('profileSection');
     const profileMenu = document.getElementById('profileMenu');
     const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 
-    // Закрытие мобильного drawer при клике вне его
+    // Закрытие мобильного drawer при клике на overlay
     if (window.innerWidth <= 480 && mobileOverlay && e.target === mobileOverlay) {
-        toggleMobileProfile();
+        if (profileSection.classList.contains('active')) {
+            toggleMobileProfile();
+        }
+        return;
+    }
+
+    // На мобильном не закрываем при клике вне (только по overlay или бургеру)
+    if (window.innerWidth <= 480) {
         return;
     }
 
