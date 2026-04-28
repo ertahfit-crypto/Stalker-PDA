@@ -25,7 +25,7 @@ const locations = {
     cordon: {
         name: "Кордон",
         description: "Вход в Зону. Первое, что видят новички. Здесь находятся лагерь новичков и пост военных. Относительно безопасное место, но beware - мутанты и бандиты не дремлют. Идеальное место для старта.",
-        image: "blob:https://gemini.google.com/20ff9b8b-14f7-4880-8938-4e715af50f02",
+        image: "https://i.ytimg.com/vi/a_QtASKK9X8/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDF6EK3G4DBIv__Yadbkp2Aef0Zpw",
         danger: "НИЗКАЯ",
         artifacts: "ОБЫЧНЫЕ",
         mutants: "СВИНЬИ, ПСЫ"
