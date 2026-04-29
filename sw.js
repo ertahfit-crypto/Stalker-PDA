@@ -1,14 +1,10 @@
-const CACHE_NAME = 'stalker-chat-v2';
+const CACHE_NAME = 'stalker-chat-v3';
 const urlsToCache = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/manifest.json',
-  'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
-  'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js',
-  'https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Russo+One&display=swap'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', event => {
@@ -21,13 +17,34 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Skip external requests (Firebase, fonts, images, etc.)
+  if (!event.request.url.startsWith(self.location.origin)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        return fetch(event.request)
+          .then(response => {
+            // Cache successful responses
+            if (response && response.status === 200) {
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, responseToCache);
+                });
+            }
+            return response;
+          })
+          .catch(() => {
+            // If fetch fails, try to return from cache
+            return caches.match(event.request);
+          });
       })
   );
 });
