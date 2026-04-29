@@ -69,8 +69,16 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="profile-nav">
+
+                    <!-- Секция для неавторизованных пользователей -->
+                    <div class="guest-auth-section" id="guestAuthSection" style="display: none;">
+                        <div class="profile-nav">
+                            <button class="auth-nav-btn mobile-auth-btn" onclick="switchSection('login'); toggleMobileProfile();">ВХОД</button>
+                            <button class="auth-nav-btn highlighted mobile-auth-btn" onclick="switchSection('register'); toggleMobileProfile();">РЕГИСТРАЦИЯ</button>
+                        </div>
+                    </div>
+
+                    <div class="profile-nav" id="profileNav">
                         <a href="#" class="profile-nav-item" onclick="openProfileSettings()">
                             <span class="nav-icon">👤</span>
                             <span>Профиль</span>
@@ -92,8 +100,8 @@
                             <span>Достижения</span>
                         </a>
                     </div>
-                    
-                    <div class="profile-footer">
+
+                    <div class="profile-footer" id="profileFooter">
                         <button class="logout-profile-btn" onclick="logout()">ВЫЙТИ ИЗ АККАУНТА</button>
                     </div>
                 </div>

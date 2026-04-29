@@ -124,7 +124,7 @@ function checkMobileView() {
     const authButtons = document.getElementById('authButtons');
 
     if (window.innerWidth <= 480) {
-        if (mobileMenuBtn && currentUser) {
+        if (mobileMenuBtn) {
             mobileMenuBtn.style.display = 'block';
         }
         if (authButtons && !currentUser) {
@@ -207,11 +207,25 @@ function checkAuthState() {
 function updateUserInterface(user) {
     const profileSection = document.getElementById('profileSection');
     const authButtons = document.getElementById('authButtons');
+    const guestAuthSection = document.getElementById('guestAuthSection');
+    const profileNav = document.getElementById('profileNav');
+    const profileFooter = document.getElementById('profileFooter');
+    const profileHeader = document.querySelector('.profile-header');
 
     if (user) {
         // Показываем профиль
-        profileSection.style.display = 'flex';
+        if (window.innerWidth > 480) {
+            profileSection.style.display = 'flex';
+        } else {
+            profileSection.style.display = '';
+        }
         authButtons.style.display = 'none';
+
+        // Скрываем секцию для гостей, показываем профиль
+        if (guestAuthSection) guestAuthSection.style.display = 'none';
+        if (profileNav) profileNav.style.display = 'block';
+        if (profileFooter) profileFooter.style.display = 'block';
+        if (profileHeader) profileHeader.style.display = 'block';
 
         // Загружаем профиль пользователя из Firestore
         loadUserProfile(user);
@@ -233,9 +247,20 @@ function updateUserInterface(user) {
             initializeChat();
         }
     } else {
-        // Показываем кнопки авторизации
-        profileSection.style.display = 'none';
-        authButtons.style.display = 'flex';
+        // Показываем кнопки авторизации на десктопе
+        if (window.innerWidth > 480) {
+            profileSection.style.display = 'none';
+            authButtons.style.display = 'flex';
+        } else {
+            profileSection.style.display = '';
+            authButtons.style.display = 'none';
+        }
+
+        // На мобильном показываем секцию для гостей в панели
+        if (guestAuthSection) guestAuthSection.style.display = 'block';
+        if (profileNav) profileNav.style.display = 'none';
+        if (profileFooter) profileFooter.style.display = 'none';
+        if (profileHeader) profileHeader.style.display = 'none';
 
         // Проверяем мобильное представление
         checkMobileView();
