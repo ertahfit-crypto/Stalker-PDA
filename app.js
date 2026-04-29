@@ -18,6 +18,8 @@ const db = firebase.firestore();
 let currentUser = null;
 let chatListener = null;
 let userListener = null;
+let usersListener = null;
+let usersMap = {};
 let userProfile = null;
 
 // Данные о локациях
@@ -413,41 +415,86 @@ function getErrorMessage(errorCode) {
 // Чат
 function initializeChat() {
     if (chatListener) return;
-    
+
     const chatMessages = document.getElementById('chatMessages');
-    
+
+    // Подписка на изменения пользователей для realtime обновления ника и аватара
+    if (!usersListener) {
+        usersListener = db.collection('users')
+            .onSnapshot(function(snapshot) {
+                snapshot.docChanges().forEach(function(change) {
+                    if (change.type === 'added' || change.type === 'modified') {
+                        const userData = change.doc.data();
+                        usersMap[change.doc.id] = {
+                            nickname: userData.nickname || 'Stalker',
+                            avatar: userData.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S'
+                        };
+                    } else if (change.type === 'removed') {
+                        delete usersMap[change.doc.id];
+                    }
+                });
+
+                // Перерисовываем сообщения при обновлении пользователей
+                if (chatListener) {
+                    refreshChatMessages();
+                }
+            });
+    }
+
     chatListener = db.collection('chatMessages')
         .orderBy('timestamp', 'desc')
         .limit(50)
         .onSnapshot(function(snapshot) {
             chatMessages.innerHTML = '';
-            
+
             snapshot.docs.reverse().forEach(doc => {
                 const message = doc.data();
                 message.id = doc.id; // Сохраняем ID для удаления
                 addMessageToChat(message);
             });
-            
+
             // Прокручиваем вниз
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
 }
 
+// Перерисовка сообщений (при обновлении данных пользователей)
+function refreshChatMessages() {
+    const chatMessages = document.getElementById('chatMessages');
+    const currentMessages = Array.from(chatMessages.children);
+
+    currentMessages.forEach(messageDiv => {
+        const messageId = messageDiv.dataset.messageId;
+        if (!messageId) return;
+
+        db.collection('chatMessages').doc(messageId).get()
+            .then(doc => {
+                if (doc.exists) {
+                    const message = doc.data();
+                    message.id = doc.id;
+                    messageDiv.remove();
+                    addMessageToChat(message);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении сообщения:', error);
+            });
+    });
+}
+
 function sendMessage() {
     const messageInput = document.getElementById('messageInput');
     const message = messageInput.value.trim();
-    
+
     if (!message || !currentUser) return;
-    
+
     const messageData = {
         text: message,
-        user: userProfile?.nickname || currentUser.displayName || currentUser.email,
         userId: currentUser.uid,
-        avatar: userProfile?.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S',
         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         deleted: false
     };
-    
+
     db.collection('chatMessages').add(messageData)
         .then(() => {
             messageInput.value = '';
@@ -461,36 +508,42 @@ function sendMessage() {
 function addMessageToChat(message) {
     const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
-    
-    const timestamp = message.timestamp ? 
-        new Date(message.timestamp.toDate()).toLocaleTimeString() : 
+
+    const timestamp = message.timestamp ?
+        new Date(message.timestamp.toDate()).toLocaleTimeString() :
         new Date().toLocaleTimeString();
-    
+
     const isOwnMessage = currentUser && message.userId === currentUser.uid;
     const isDeleted = message.deleted;
-    
+
+    // Получаем актуальные данные пользователя из usersMap
+    const userData = usersMap[message.userId] || {
+        nickname: message.user || 'Stalker',
+        avatar: message.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S'
+    };
+
     messageDiv.className = 'user-log';
     messageDiv.dataset.messageId = message.id;
-    
+
     let messageContent = '';
     if (isDeleted) {
         messageContent = '<span class="deleted-text">Сообщение удалено</span>';
     } else {
         messageContent = `<span class="log-text">${message.text}</span>`;
     }
-    
+
     messageDiv.innerHTML = `
         <span class="log-time">[${timestamp}]</span>
         <div class="message-content-wrapper">
-            <img src="${message.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S'}" class="message-avatar" alt="${message.user}">
+            <img src="${userData.avatar}" class="message-avatar" alt="${userData.nickname}">
             <div class="message-text-wrapper">
-                <span class="message-nickname">${message.user}</span>
+                <span class="message-nickname">${userData.nickname}</span>
                 ${messageContent}
             </div>
             ${isOwnMessage && !isDeleted ? `<button class="delete-message-btn" onclick="deleteMessage('${message.id}')" title="Удалить сообщение">🗑️</button>` : ''}
         </div>
     `;
-    
+
     chatMessages.appendChild(messageDiv);
 }
 
@@ -510,21 +563,45 @@ function showSystemMessage(text) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// Переменная для хранения ID сообщения к удалению
+let messageToDelete = null;
+
+// Открытие модалки подтверждения удаления
+function openDeleteModal(messageId) {
+    messageToDelete = messageId;
+    document.getElementById('deleteConfirmModal').style.display = 'flex';
+}
+
+// Закрытие модалки подтверждения удаления
+function closeDeleteModal() {
+    messageToDelete = null;
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+}
+
+// Подтверждение удаления сообщения
+function confirmDeleteMessage() {
+    if (!messageToDelete || !currentUser) {
+        closeDeleteModal();
+        return;
+    }
+
+    db.collection('chatMessages').doc(messageToDelete).update({
+        deleted: true,
+        deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+        showSystemMessage('Сообщение удалено');
+        closeDeleteModal();
+    }).catch(error => {
+        console.error('Ошибка удаления сообщения:', error);
+        showSystemMessage('Ошибка удаления сообщения');
+        closeDeleteModal();
+    });
+}
+
 // Удаление сообщения
 function deleteMessage(messageId) {
     if (!currentUser) return;
-    
-    if (confirm('Вы уверены, что хотите удалить это сообщение?')) {
-        db.collection('chatMessages').doc(messageId).update({
-            deleted: true,
-            deletedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            showSystemMessage('Сообщение удалено');
-        }).catch(error => {
-            console.error('Ошибка удаления сообщения:', error);
-            showSystemMessage('Ошибка удаления сообщения');
-        });
-    }
+    openDeleteModal(messageId);
 }
 
 // Карта локаций
