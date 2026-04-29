@@ -6,6 +6,8 @@
     <title>СТАЛКЕР ЧАТ - Зона Отчуждения</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Russo+One&display=swap" rel="stylesheet">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#d4a017">
 </head>
 <body class="industrial-theme">
     <!-- Эффекты старого телевизора -->
@@ -36,7 +38,10 @@
                     <li><a href="#facts" class="nav-link" data-section="facts">ФАКТЫ О ЗОНЕ</a></li>
                 </ul>
             </nav>
-            
+
+            <!-- Кнопка установки PWA -->
+            <button id="pwaInstallBtn" class="pwa-install-btn" style="display: none;">📱 УСТАНОВИТЬ</button>
+
             <!-- Кнопка мобильного меню -->
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileProfile()" style="display: none;">☰</button>
 

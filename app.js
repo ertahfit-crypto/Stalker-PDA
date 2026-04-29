@@ -127,6 +127,45 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
     setupEventListeners();
     checkAuthState();
+    registerServiceWorker();
+});
+
+// Регистрация Service Worker для PWA
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                console.log('Service Worker зарегистрирован:', registration);
+            })
+            .catch(error => {
+                console.log('Ошибка регистрации Service Worker:', error);
+            });
+    }
+}
+
+// Логика установки PWA
+let deferredPrompt;
+const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    pwaInstallBtn.style.display = 'block';
+});
+
+pwaInstallBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
+        deferredPrompt = null;
+        pwaInstallBtn.style.display = 'none';
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    pwaInstallBtn.style.display = 'none';
+    console.log('PWA установлено');
 });
 
 function initializeApp() {

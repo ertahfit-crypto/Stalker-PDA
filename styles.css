@@ -1915,6 +1915,33 @@ body {
     background: rgba(212, 160, 23, 0.5);
 }
 
+/* PWA Install Button */
+.pwa-install-btn {
+    padding: 8px 16px;
+    background: rgba(212, 160, 23, 0.2);
+    border: 2px solid var(--border-yellow);
+    color: var(--dirty-yellow);
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 20px;
+}
+
+.pwa-install-btn:hover {
+    background: rgba(212, 160, 23, 0.4);
+    box-shadow: 0 0 15px rgba(212, 160, 23, 0.5);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 480px) {
+    .pwa-install-btn {
+        display: none !important;
+    }
+}
+
 /* Interesting Facts Section */
 .facts-container {
     padding: 30px;
