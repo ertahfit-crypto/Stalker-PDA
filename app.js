@@ -95,6 +95,30 @@ const locations = {
         danger: "ЛЕТАЛЬНАЯ",
         artifacts: "ЛЕГЕНДАРНЫЕ",
         mutants: "МОНОЛИТ, ИЗГНАННИК"
+    },
+    redforest: {
+        name: "Рыжий лес",
+        description: "Аномальный лес с высоким уровнем радиации и мутантами. Деревья здесь стали рыжими из-за мутаций. Очень опасно для неподготовленных сталкеров.",
+        image: "https://i.ytimg.com/vi/nLAdxTsPUHI/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAcM_W0fuME0B00hgUZ4kgYmh_vkw",
+        danger: "ВЫСОКАЯ",
+        artifacts: "РЕДКИЕ",
+        mutants: "КРОВОСОСЫ, СНОРКИ"
+    },
+    limansk: {
+        name: "Лиманск",
+        description: "Заброшенный город с узкими улицами и опасными засадами. Когда-то здесь жили люди, но после катастрофы город опустел. Множество укрытий и тайников.",
+        image: "https://i.ytimg.com/vi/Qolb3YtpinU/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAjhlFjt9VqNuTU3Ua-fBn5UhNvog",
+        danger: "ВЫСОКАЯ",
+        artifacts: "ХОРОШИЕ",
+        mutants: "ЗОМБИ, ПСЫ"
+    },
+    radar: {
+        name: "РЛС Дуга",
+        description: "Огромная советская радиолокационная станция с сильным пси-воздействием. Старый радарный комплекс всё ещё работает и создаёт опасные психоактивные зоны.",
+        image: "https://inside-ua.com/files/originals/rls-duha-1.webp",
+        danger: "ЭКСТРЕМАЛЬНАЯ",
+        artifacts: "УНИКАЛЬНЫЕ",
+        mutants: "КОНТРОЛЛЕР, БЮВЕР"
     }
 };
 

@@ -33,6 +33,7 @@
                     <li><a href="#home" class="nav-link active" data-section="home">ГЛАВНАЯ</a></li>
                     <li><a href="#map" class="nav-link" data-section="map">КАРТА</a></li>
                     <li><a href="#chat" class="nav-link" data-section="chat">ЧАТ</a></li>
+                    <li><a href="#facts" class="nav-link" data-section="facts">ФАКТЫ О ЗОНЕ</a></li>
                 </ul>
             </nav>
             
@@ -212,6 +213,21 @@
                         <span class="location-name">ЧАЭС</span>
                         <span class="location-desc">Сердце Зоны</span>
                     </div>
+
+                    <div class="location-btn rusted" data-location="redforest" onclick="showLocation('redforest')">
+                        <span class="location-name">РЫЖИЙ ЛЕС</span>
+                        <span class="location-desc">Аномальный лес</span>
+                    </div>
+
+                    <div class="location-btn rusted" data-location="limansk" onclick="showLocation('limansk')">
+                        <span class="location-name">ЛИМАНСК</span>
+                        <span class="location-desc">Заброшенный город</span>
+                    </div>
+
+                    <div class="location-btn rusted" data-location="radar" onclick="showLocation('radar')">
+                        <span class="location-name">РЛС ДУГА</span>
+                        <span class="location-desc">Радиолокационная станция</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -238,6 +254,67 @@
                     </div>
                     <div class="auth-alert" id="authWarning">
                         Для отправки сообщений необходима авторизация
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Интересные факты -->
+        <section id="facts" class="content-section">
+            <div class="zone-status-header">
+                <span class="zone-title">ФАКТЫ О ЗОНЕ</span>
+            </div>
+
+            <div class="facts-container">
+                <!-- Блоки фактов -->
+                <div class="facts-cards-grid">
+                    <div class="fact-card">
+                        <h3 class="fact-card-title">📌 Авария на ЧАЭС</h3>
+                        <p class="fact-card-text">Катастрофа 1986 года стала точкой отсчёта для создания Зоны. Взрыв реактора №4 выбросил в атмосферу огромное количество радиации, изменив природу навсегда.</p>
+                    </div>
+
+                    <div class="fact-card">
+                        <h3 class="fact-card-title">📌 Зона отчуждения</h3>
+                        <p class="fact-card-text">Территория вокруг ЧАЭС площадью 30 км² была полностью эвакуирована. Сейчас это место полна опасностей, но также и уникальных артефактов.</p>
+                    </div>
+
+                    <div class="fact-card">
+                        <h3 class="fact-card-title">📌 Мутанты и аномалии</h3>
+                        <p class="fact-card-text">В Зоне обитают существования, которых нет в обычном мире. Контроллеры, кровососы, снорки - всё это результат мутаций и экспериментов.</p>
+                    </div>
+
+                    <div class="fact-card">
+                        <h3 class="fact-card-title">📌 Артефакты</h3>
+                        <p class="fact-card-text">Аномальные предметы с уникальными свойствами, образующиеся в зоне. Сталкеры рискуют жизнью, чтобы найти их и продать учёным или коллекционерам.</p>
+                    </div>
+
+                    <div class="fact-card">
+                        <h3 class="fact-card-title">📌 Выброс</h3>
+                        <p class="fact-card-text">Мощный энергетический всплеск, уничтожающий всё живое в зоне. Происходит периодически и заставляет сталкеров искать укрытие. Без защиты гибель неизбежна.</p>
+                    </div>
+
+                    <div class="fact-card">
+                        <h3 class="fact-card-title">📌 Группировки</h3>
+                        <p class="fact-card-text">Различные фракции сталкеров, ведущие борьбу за контроль над зоной. Долг, Свобода, Монолит, Военные — у каждой свои цели и методы.</p>
+                    </div>
+                </div>
+
+                <!-- Блок с фото -->
+                <div class="facts-section">
+                    <h3 class="facts-section-title">🖼️ Фотогалерея</h3>
+                    <div class="facts-gallery">
+                        <img src="https://hromadske.radio/_next/image?url=https%3A%2F%2Fstatic.hromadske.radio%2F2023%2F04%2F84_main.jpg&w=1366&q=75" alt="Чернобыль" class="gallery-image">
+                        <img src="https://lan.od.ua/uploads/posts/2021-05/1620117243_chernobylcy_mp4_00_01_37_08_nepodvizhnoe-izobrazhenie005.jpg" alt="Чернобыль" class="gallery-image">
+                        <img src="https://cosmosmuseum.info/wp-content/uploads/2021/04/ch03.jpg" alt="Чернобыль" class="gallery-image">
+                    </div>
+                </div>
+
+                <!-- Блок с видео -->
+                <div class="facts-section">
+                    <h3 class="facts-section-title">🎥 Видео</h3>
+                    <div class="facts-video">
+                        <iframe width="100%" height="400" src="https://www.youtube.com/embed/bSLblo3wDVE" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        <iframe width="100%" height="400" src="https://www.youtube.com/embed/gQYXYNEzlTM" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                     </div>
                 </div>
             </div>

@@ -1915,6 +1915,134 @@ body {
     background: rgba(212, 160, 23, 0.5);
 }
 
+/* Interesting Facts Section */
+.facts-container {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.facts-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.fact-card {
+    background: var(--near-black);
+    border: 2px solid var(--border-yellow);
+    padding: 25px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(212, 160, 23, 0.1);
+}
+
+.fact-card:hover {
+    box-shadow: 0 0 20px rgba(212, 160, 23, 0.4);
+    transform: translateY(-5px);
+    border-color: var(--dirty-yellow);
+}
+
+.fact-card-title {
+    color: var(--dirty-yellow);
+    font-size: 18px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.fact-card-text {
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.facts-section {
+    margin-bottom: 40px;
+}
+
+.facts-section-title {
+    color: var(--dirty-yellow);
+    font-size: 22px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--border-yellow);
+    padding-bottom: 10px;
+}
+
+.facts-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.gallery-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border: 2px solid var(--border-yellow);
+    transition: all 0.3s ease;
+}
+
+.gallery-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(212, 160, 23, 0.5);
+}
+
+.gallery-placeholder,
+.video-placeholder {
+    background: var(--near-black);
+    border: 2px dashed var(--border-yellow);
+    padding: 60px 20px;
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.placeholder-text {
+    color: #666;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.facts-video {
+    width: 100%;
+}
+
+@media (max-width: 480px) {
+    .facts-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .facts-gallery {
+        grid-template-columns: 1fr;
+    }
+
+    .facts-container {
+        padding: 15px;
+    }
+
+    .fact-card {
+        padding: 20px;
+    }
+
+    .fact-card-title {
+        font-size: 16px;
+    }
+
+    .fact-card-text {
+        font-size: 13px;
+    }
+
+    .facts-section-title {
+        font-size: 18px;
+    }
+}
+
 @media (max-width: 480px) {
     .mobile-close-btn {
         display: flex;
