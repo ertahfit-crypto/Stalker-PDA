@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор иконок PWA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b0b0b;
+            color: #d4a017;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            background: #d4a017;
+            color: #0b0b0b;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #f5b82e;
+        }
+        canvas {
+            display: none;
+        }
+        .preview {
+            display: inline-block;
+            margin: 20px;
+            padding: 20px;
+            border: 2px solid #d4a017;
+            border-radius: 10px;
+        }
+        .preview img {
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Генератор иконок PWA</h1>
+    <p>Нажмите кнопку для генерации иконок со знаком радиации</p>
+    
+    <button onclick="generateIcons()">Генерировать иконки</button>
+    
+    <div id="previews"></div>
+    
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+
+    <script>
+        function drawRadiationSymbol(ctx, size) {
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = size * 0.35;
+            const strokeWidth = size * 0.04;
+            const centerRadius = size * 0.07;
+
+            // Фон
+            ctx.fillStyle = '#0b0b0b';
+            ctx.fillRect(0, 0, size, size);
+
+            // Внешний круг
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#d4a017';
+            ctx.lineWidth = strokeWidth;
+            ctx.stroke();
+
+            // Центральный круг
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, centerRadius, 0, Math.PI * 2);
+            ctx.fillStyle = '#d4a017';
+            ctx.fill();
+
+            // Лучи (6 лучей)
+            ctx.strokeStyle = '#d4a017';
+            ctx.lineWidth = strokeWidth;
+            ctx.lineCap = 'round';
+
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI) / 3;
+                const innerRadius = centerRadius + strokeWidth;
+                const outerRadius = radius - strokeWidth;
+                
+                ctx.beginPath();
+                ctx.moveTo(
+                    centerX + Math.cos(angle) * innerRadius,
+                    centerY + Math.sin(angle) * innerRadius
+                );
+                ctx.lineTo(
+                    centerX + Math.cos(angle) * outerRadius,
+                    centerY + Math.sin(angle) * outerRadius
+                );
+                ctx.stroke();
+            }
+        }
+
+        function generateIcons() {
+            const previews = document.getElementById('previews');
+            previews.innerHTML = '';
+
+            // 192x192
+            const canvas192 = document.getElementById('canvas192');
+            const ctx192 = canvas192.getContext('2d');
+            drawRadiationSymbol(ctx192, 192);
+            
+            const dataURL192 = canvas192.toDataURL('image/png');
+            const link192 = document.createElement('a');
+            link192.href = dataURL192;
+            link192.download = 'icon-192.png';
+            link192.click();
+
+            const preview192 = document.createElement('div');
+            preview192.className = 'preview';
+            preview192.innerHTML = `
+                <h3>icon-192.png (192x192)</h3>
+                <img src="${dataURL192}" width="96" height="96">
+                <p>Скачано!</p>
+            `;
+            previews.appendChild(preview192);
+
+            // 512x512
+            const canvas512 = document.getElementById('canvas512');
+            const ctx512 = canvas512.getContext('2d');
+            drawRadiationSymbol(ctx512, 512);
+            
+            const dataURL512 = canvas512.toDataURL('image/png');
+            const link512 = document.createElement('a');
+            link512.href = dataURL512;
+            link512.download = 'icon-512.png';
+            link512.click();
+
+            const preview512 = document.createElement('div');
+            preview512.className = 'preview';
+            preview512.innerHTML = `
+                <h3>icon-512.png (512x512)</h3>
+                <img src="${dataURL512}" width="128" height="128">
+                <p>Скачано!</p>
+            `;
+            previews.appendChild(preview512);
+        }
+    </script>
+</body>
+</html>
