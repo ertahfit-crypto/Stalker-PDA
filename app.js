@@ -24,6 +24,12 @@ let userProfile = null;
 let statsListener = null;
 let activityChart = null;
 let activityListener = null;
+let lastMessageTime = 0;
+const MESSAGE_COOLDOWN = 2000; // 2 seconds
+let currentChatMode = 'general';
+let privateChatListener = null;
+let currentPrivateChatId = null;
+let privateChatsListener = null;
 
 // Данные о локациях
 const locations = {
@@ -900,6 +906,35 @@ function sendMessage() {
 
     if (!message || !currentUser) return;
 
+    // Cooldown check
+    const now = Date.now();
+    if (now - lastMessageTime < MESSAGE_COOLDOWN) {
+        showSystemMessage('Подождите перед отправкой следующего сообщения');
+        return;
+    }
+
+    // Length validation
+    if (message.length > 200) {
+        showSystemMessage('Сообщение слишком длинное (максимум 200 символов)');
+        return;
+    }
+
+    // Empty check
+    if (message.length === 0) {
+        showSystemMessage('Сообщение не может быть пустым');
+        return;
+    }
+
+    // Garbage filter (100 identical chars)
+    const charCounts = {};
+    for (const char of message) {
+        charCounts[char] = (charCounts[char] || 0) + 1;
+        if (charCounts[char] > 100) {
+            showSystemMessage('Сообщение содержит слишком много повторяющихся символов');
+            return;
+        }
+    }
+
     // Profanity filter with replacement
     const bannedWords = ['чмо', 'гнида', 'лох', 'еб', 'хуй', 'пизд', 'бля', 'сука', 'пидор', 'гандон', 'мудак', 'ахуе', 'ахуенный', 'блядь', 'ебучий', 'заебал', 'наебал', 'пиздец'];
     const lowerMessage = message.toLowerCase();
@@ -919,10 +954,283 @@ function sendMessage() {
     db.collection('chatMessages').add(messageData)
         .then(() => {
             messageInput.value = '';
+            lastMessageTime = now;
         })
         .catch(error => {
             console.error('Ошибка отправки сообщения:', error);
             showSystemMessage('Ошибка отправки сообщения');
+        });
+}
+
+// Chat Mode Switching
+function switchChatMode(mode) {
+    currentChatMode = mode;
+    const generalChatBtn = document.getElementById('generalChatBtn');
+    const privateChatBtn = document.getElementById('privateChatBtn');
+    const generalChat = document.getElementById('generalChat');
+    const privateChat = document.getElementById('privateChat');
+
+    if (mode === 'general') {
+        generalChatBtn.classList.add('active');
+        privateChatBtn.classList.remove('active');
+        generalChat.style.display = 'flex';
+        privateChat.style.display = 'none';
+        closePrivateChat();
+
+        // Force layout recalculation and scroll to bottom
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.offsetHeight; // Force reflow
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 50);
+    } else {
+        generalChatBtn.classList.remove('active');
+        privateChatBtn.classList.add('active');
+        generalChat.style.display = 'none';
+        privateChat.style.display = 'flex';
+        loadPrivateChatsList();
+    }
+}
+
+// Private Chats
+function getChatId(uid1, uid2) {
+    return [uid1, uid2].sort().join('_');
+}
+
+function loadPrivateChatsList() {
+    if (!currentUser) return;
+
+    const privateChatsList = document.getElementById('privateChatsList');
+    privateChatsList.innerHTML = '';
+
+    if (privateChatsListener) {
+        privateChatsListener();
+    }
+
+    privateChatsListener = db.collection('privateChats')
+        .where('users', 'array-contains', currentUser.uid)
+        .orderBy('updatedAt', 'desc')
+        .onSnapshot(snapshot => {
+            privateChatsList.innerHTML = '';
+
+            if (snapshot.empty) {
+                privateChatsList.innerHTML = '<div class="system-log"><span class="log-text">Нет личных сообщений</span></div>';
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                const chatData = doc.data();
+                const otherUserId = chatData.users.find(uid => uid !== currentUser.uid);
+                const otherUser = usersMap[otherUserId];
+
+                if (otherUser) {
+                    const chatItem = document.createElement('div');
+                    chatItem.className = 'private-chat-item';
+                    chatItem.onclick = () => openPrivateChat(doc.id, otherUser);
+
+                    const lastMessage = chatData.lastMessage || 'Нет сообщений';
+                    const updatedAt = chatData.updatedAt ?
+                        new Date(chatData.updatedAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                        '';
+
+                    chatItem.innerHTML = `
+                        <img src="${otherUser.avatar}" alt="${otherUser.nickname}">
+                        <div class="private-chat-item-info">
+                            <div class="private-chat-item-name">${otherUser.nickname}</div>
+                            <div class="private-chat-item-last">${lastMessage}</div>
+                            <div class="private-chat-item-time">${updatedAt}</div>
+                        </div>
+                    `;
+
+                    privateChatsList.appendChild(chatItem);
+                }
+            });
+        });
+}
+
+function openPrivateChat(chatId, otherUser) {
+    currentPrivateChatId = chatId;
+    const privateChatsList = document.getElementById('privateChatsList');
+    const privateChatView = document.getElementById('privateChatView');
+    const privateChatTitle = document.getElementById('privateChatTitle');
+    const privateChatMessages = document.getElementById('privateChatMessages');
+
+    privateChatsList.style.display = 'none';
+    privateChatView.style.display = 'flex';
+    privateChatTitle.textContent = otherUser.nickname;
+    privateChatMessages.innerHTML = '';
+
+    if (privateChatListener) {
+        privateChatListener();
+    }
+
+    privateChatListener = db.collection('privateChats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot(snapshot => {
+            privateChatMessages.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const message = doc.data();
+                addPrivateMessageToChat(message);
+            });
+
+            privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
+        });
+}
+
+function closePrivateChat() {
+    if (privateChatListener) {
+        privateChatListener();
+        privateChatListener = null;
+    }
+    currentPrivateChatId = null;
+
+    const privateChatsList = document.getElementById('privateChatsList');
+    const privateChatView = document.getElementById('privateChatView');
+
+    privateChatsList.style.display = 'block';
+    privateChatView.style.display = 'none';
+}
+
+function sendPrivateMessage() {
+    const messageInput = document.getElementById('privateMessageInput');
+    let message = messageInput.value.trim();
+
+    if (!message || !currentUser || !currentPrivateChatId) return;
+
+    // Cooldown check
+    const now = Date.now();
+    if (now - lastMessageTime < MESSAGE_COOLDOWN) {
+        showSystemMessage('Подождите перед отправкой следующего сообщения');
+        return;
+    }
+
+    // Length validation
+    if (message.length > 200) {
+        showSystemMessage('Сообщение слишком длинное (максимум 200 символов)');
+        return;
+    }
+
+    // Profanity filter
+    const bannedWords = ['чмо', 'гнида', 'лох', 'еб', 'хуй', 'пизд', 'бля', 'сука', 'пидор', 'гандон', 'мудак', 'ахуе', 'ахуенный', 'блядь', 'ебучий', 'заебал', 'наебал', 'пиздец'];
+    for (const word of bannedWords) {
+        const regex = new RegExp(word, 'gi');
+        message = message.replace(regex, '***');
+    }
+
+    const messageData = {
+        text: message,
+        senderId: currentUser.uid,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    db.collection('privateChats')
+        .doc(currentPrivateChatId)
+        .collection('messages')
+        .add(messageData)
+        .then(() => {
+            messageInput.value = '';
+            lastMessageTime = now;
+
+            // Update last message in chat document
+            db.collection('privateChats')
+                .doc(currentPrivateChatId)
+                .update({
+                    lastMessage: message,
+                    lastSenderId: currentUser.uid,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+        })
+        .catch(error => {
+            console.error('Ошибка отправки личного сообщения:', error);
+            showSystemMessage('Ошибка отправки сообщения');
+        });
+}
+
+function addPrivateMessageToChat(message) {
+    const privateChatMessages = document.getElementById('privateChatMessages');
+    const messageDiv = document.createElement('div');
+
+    const timestamp = message.timestamp ?
+        new Date(message.timestamp.toDate()).toLocaleTimeString() :
+        new Date().toLocaleTimeString();
+
+    const isOwnMessage = message.senderId === currentUser.uid;
+    const senderData = usersMap[message.senderId] || {
+        nickname: 'Stalker',
+        avatar: '/images/default-avatar.png'
+    };
+
+    messageDiv.className = 'user-log';
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'log-time';
+    timeSpan.textContent = `[${timestamp}]`;
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'message-content-wrapper';
+
+    const avatarImg = document.createElement('img');
+    avatarImg.src = senderData.avatar;
+    avatarImg.className = 'message-avatar';
+    avatarImg.alt = senderData.nickname;
+
+    const textWrapper = document.createElement('div');
+    textWrapper.className = 'message-text-wrapper';
+
+    const nicknameSpan = document.createElement('span');
+    nicknameSpan.className = 'message-nickname';
+    nicknameSpan.textContent = senderData.nickname;
+
+    const logTextSpan = document.createElement('span');
+    logTextSpan.className = 'log-text';
+    logTextSpan.textContent = message.text;
+
+    textWrapper.appendChild(nicknameSpan);
+    textWrapper.appendChild(logTextSpan);
+
+    contentWrapper.appendChild(avatarImg);
+    contentWrapper.appendChild(textWrapper);
+
+    messageDiv.appendChild(timeSpan);
+    messageDiv.appendChild(contentWrapper);
+
+    privateChatMessages.appendChild(messageDiv);
+}
+
+function startPrivateChatWithUser(userId) {
+    if (!currentUser || userId === currentUser.uid) return;
+
+    const chatId = getChatId(currentUser.uid, userId);
+    const otherUser = usersMap[userId];
+
+    if (!otherUser) {
+        showSystemMessage('Пользователь не найден');
+        return;
+    }
+
+    // Check if chat exists
+    db.collection('privateChats').doc(chatId).get()
+        .then(doc => {
+            if (!doc.exists) {
+                // Create new chat
+                db.collection('privateChats').doc(chatId).set({
+                    users: [currentUser.uid, userId],
+                    lastMessage: '',
+                    lastSenderId: '',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            // Switch to private chat mode and open chat
+            switchChatMode('private');
+            openPrivateChat(chatId, otherUser);
+        })
+        .catch(error => {
+            console.error('Ошибка создания личного чата:', error);
+            showSystemMessage('Ошибка создания чата');
         });
 }
 
@@ -948,29 +1256,68 @@ function addMessageToChat(message) {
     messageDiv.className = 'user-log';
     messageDiv.dataset.messageId = message.id;
 
-    let messageContent = '';
-    if (isDeleted) {
-        messageContent = '<span class="deleted-text">Сообщение удалено</span>';
-    } else {
-        messageContent = `<span class="log-text">${message.text}</span>`;
+    // Build message structure safely
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'log-time';
+    timeSpan.textContent = `[${timestamp}]`;
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'message-content-wrapper';
+
+    const avatarImg = document.createElement('img');
+    avatarImg.src = userData.avatar;
+    avatarImg.className = 'message-avatar';
+    avatarImg.alt = userData.nickname;
+
+    const textWrapper = document.createElement('div');
+    textWrapper.className = 'message-text-wrapper';
+
+    const nicknameSpan = document.createElement('span');
+    nicknameSpan.className = 'message-nickname';
+    nicknameSpan.textContent = userData.nickname;
+    nicknameSpan.style.cursor = 'pointer';
+    nicknameSpan.onclick = () => startPrivateChatWithUser(message.userId);
+
+    if (userData.role === 'admin') {
+        const adminBadge = document.createElement('span');
+        adminBadge.className = 'admin-badge';
+        adminBadge.textContent = '[ADMIN]';
+        nicknameSpan.appendChild(document.createTextNode(' '));
+        nicknameSpan.appendChild(adminBadge);
     }
 
-    const adminBadge = userData.role === 'admin' ? '<span class="admin-badge">[ADMIN]</span>' : '';
-    const canDelete = (isOwnMessage || isAdmin) && !isDeleted;
+    textWrapper.appendChild(nicknameSpan);
 
-    messageDiv.innerHTML = `
-        <span class="log-time">[${timestamp}]</span>
-        <div class="message-content-wrapper">
-            <img src="${userData.avatar}" class="message-avatar" alt="${userData.nickname}">
-            <div class="message-text-wrapper">
-                <span class="message-nickname">${userData.nickname} ${adminBadge}</span>
-                ${messageContent}
-            </div>
-            ${canDelete ? `<button class="delete-message-btn" onclick="deleteMessage('${message.id}')" title="Удалить сообщение">🗑️</button>` : ''}
-        </div>
-    `;
+    if (isDeleted) {
+        const deletedSpan = document.createElement('span');
+        deletedSpan.className = 'deleted-text';
+        deletedSpan.textContent = 'Сообщение удалено';
+        textWrapper.appendChild(deletedSpan);
+    } else {
+        const logTextSpan = document.createElement('span');
+        logTextSpan.className = 'log-text';
+        logTextSpan.textContent = message.text;
+        textWrapper.appendChild(logTextSpan);
+    }
+
+    contentWrapper.appendChild(avatarImg);
+    contentWrapper.appendChild(textWrapper);
+
+    const canDelete = (isOwnMessage || isAdmin) && !isDeleted;
+    if (canDelete) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-message-btn';
+        deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Удалить сообщение';
+        deleteBtn.onclick = () => deleteMessage(message.id);
+        contentWrapper.appendChild(deleteBtn);
+    }
+
+    messageDiv.appendChild(timeSpan);
+    messageDiv.appendChild(contentWrapper);
 
     chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function showSystemMessage(text) {

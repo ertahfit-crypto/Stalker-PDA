@@ -279,15 +279,20 @@
                 <span class="zone-title">СВЯЗЬ С СТАЛКЕРАМИ</span>
                 <span class="connection-status">СТАТУС: <span class="status-online">ОНЛАЙН</span></span>
             </div>
-            
-            <div class="terminal-chat">
+
+            <div class="chat-toggle-container">
+                <button class="chat-toggle-btn active" id="generalChatBtn" onclick="switchChatMode('general')">Общий чат</button>
+                <button class="chat-toggle-btn" id="privateChatBtn" onclick="switchChatMode('private')">Личные</button>
+            </div>
+
+            <div class="terminal-chat" id="generalChat">
                 <div class="chat-log" id="chatMessages">
                     <div class="system-log">
                         <span class="log-time">[00:00:00]</span>
                         <span class="log-text">Система связи инициализирована</span>
                     </div>
                 </div>
-                
+
                 <div class="chat-terminal" id="chatInputContainer">
                     <div class="terminal-input-wrapper">
                         <input type="text" id="messageInput" class="terminal-input" placeholder="> Введите сообщение..." disabled>
@@ -295,6 +300,28 @@
                     </div>
                     <div class="auth-alert" id="authWarning">
                         Для отправки сообщений необходима авторизация
+                    </div>
+                </div>
+            </div>
+
+            <div class="terminal-chat" id="privateChat" style="display: none;">
+                <div class="private-chats-list" id="privateChatsList">
+                    <div class="system-log">
+                        <span class="log-text">Нет личных сообщений</span>
+                    </div>
+                </div>
+
+                <div class="private-chat-view" id="privateChatView" style="display: none;">
+                    <div class="private-chat-header">
+                        <button class="back-btn" onclick="closePrivateChat()">← Назад</button>
+                        <span class="private-chat-title" id="privateChatTitle"></span>
+                    </div>
+                    <div class="chat-log" id="privateChatMessages"></div>
+                    <div class="chat-terminal">
+                        <div class="terminal-input-wrapper">
+                            <input type="text" id="privateMessageInput" class="terminal-input" placeholder="> Введите сообщение...">
+                            <button class="terminal-send-btn" onclick="sendPrivateMessage()">ОТПРАВИТЬ</button>
+                        </div>
                     </div>
                 </div>
             </div>
