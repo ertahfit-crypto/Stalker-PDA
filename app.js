@@ -997,6 +997,65 @@ function getChatId(uid1, uid2) {
     return [uid1, uid2].sort().join('_');
 }
 
+function filterPrivateChats() {
+    const searchInput = document.getElementById('privateChatSearch');
+    const query = searchInput.value.toLowerCase().trim();
+    const chatItems = document.querySelectorAll('.private-chat-item');
+
+    if (query === '') {
+        // Show all if search is empty
+        chatItems.forEach(item => {
+            item.style.display = 'flex';
+        });
+        return;
+    }
+
+    // Sort items: starts with query first, then includes
+    const itemsArray = Array.from(chatItems);
+    const matches = [];
+
+    itemsArray.forEach(item => {
+        const nickname = item.querySelector('.private-chat-item-name').textContent.toLowerCase();
+        if (nickname.includes(query)) {
+            const startsWith = nickname.startsWith(query);
+            matches.push({ item, startsWith, nickname });
+        }
+    });
+
+    // Sort: starts with first, then by nickname
+    matches.sort((a, b) => {
+        if (a.startsWith && !b.startsWith) return -1;
+        if (!a.startsWith && b.startsWith) return 1;
+        return a.nickname.localeCompare(b.nickname);
+    });
+
+    // Hide all first
+    chatItems.forEach(item => {
+        item.style.display = 'none';
+    });
+
+    // Show sorted matches
+    matches.forEach(({ item }) => {
+        item.style.display = 'flex';
+    });
+
+    // Show "nothing found" if no matches
+    const privateChatsList = document.getElementById('privateChatsList');
+    let nothingFound = privateChatsList.querySelector('.nothing-found');
+
+    if (matches.length === 0) {
+        if (!nothingFound) {
+            nothingFound = document.createElement('div');
+            nothingFound.className = 'system-log nothing-found';
+            nothingFound.innerHTML = '<span class="log-text">Ничего не найдено</span>';
+            privateChatsList.appendChild(nothingFound);
+        }
+        nothingFound.style.display = 'block';
+    } else if (nothingFound) {
+        nothingFound.style.display = 'none';
+    }
+}
+
 function loadPrivateChatsList() {
     if (!currentUser) return;
 
@@ -1007,10 +1066,13 @@ function loadPrivateChatsList() {
         privateChatsListener();
     }
 
+    console.log('Loading private chats for user:', currentUser.uid);
+
     privateChatsListener = db.collection('privateChats')
         .where('users', 'array-contains', currentUser.uid)
         .orderBy('updatedAt', 'desc')
         .onSnapshot(snapshot => {
+            console.log('Private chats snapshot size:', snapshot.size);
             privateChatsList.innerHTML = '';
 
             if (snapshot.empty) {
@@ -1020,8 +1082,11 @@ function loadPrivateChatsList() {
 
             snapshot.forEach(doc => {
                 const chatData = doc.data();
+                console.log('Chat data:', chatData);
                 const otherUserId = chatData.users.find(uid => uid !== currentUser.uid);
                 const otherUser = usersMap[otherUserId];
+
+                console.log('Other user ID:', otherUserId, 'User data:', otherUser);
 
                 if (otherUser) {
                     const chatItem = document.createElement('div');
@@ -1126,16 +1191,33 @@ function sendPrivateMessage() {
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    db.collection('privateChats')
-        .doc(currentPrivateChatId)
-        .collection('messages')
-        .add(messageData)
+    // Ensure chat document exists before sending message
+    db.collection('privateChats').doc(currentPrivateChatId).get()
+        .then(doc => {
+            if (!doc.exists) {
+                // Extract users from chatId
+                const uids = currentPrivateChatId.split('_');
+                return db.collection('privateChats').doc(currentPrivateChatId).set({
+                    users: uids,
+                    lastMessage: '',
+                    lastSenderId: '',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        })
+        .then(() => {
+            // Send message
+            return db.collection('privateChats')
+                .doc(currentPrivateChatId)
+                .collection('messages')
+                .add(messageData);
+        })
         .then(() => {
             messageInput.value = '';
             lastMessageTime = now;
 
             // Update last message in chat document
-            db.collection('privateChats')
+            return db.collection('privateChats')
                 .doc(currentPrivateChatId)
                 .update({
                     lastMessage: message,
@@ -1215,9 +1297,10 @@ function startPrivateChatWithUser(userId) {
     db.collection('privateChats').doc(chatId).get()
         .then(doc => {
             if (!doc.exists) {
-                // Create new chat
+                // Create new chat with sorted users array
+                const users = [currentUser.uid, userId].sort();
                 db.collection('privateChats').doc(chatId).set({
-                    users: [currentUser.uid, userId],
+                    users: users,
                     lastMessage: '',
                     lastSenderId: '',
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()

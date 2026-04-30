@@ -305,6 +305,9 @@
             </div>
 
             <div class="terminal-chat" id="privateChat" style="display: none;">
+                <div class="private-chat-search">
+                    <input type="text" id="privateChatSearch" class="search-input" placeholder="Поиск сталкера..." oninput="filterPrivateChats()">
+                </div>
                 <div class="private-chats-list" id="privateChatsList">
                     <div class="system-log">
                         <span class="log-text">Нет личных сообщений</span>
