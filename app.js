@@ -652,6 +652,14 @@ async function login() {
 
     try {
         const result = await auth.signInWithEmailAndPassword(email, password);
+
+        // Auto-assign admin role for specific email
+        if (email === 'erikmetr6546@gmail.com') {
+            await db.collection('users').doc(result.user.uid).update({
+                role: 'admin'
+            });
+        }
+
         // Set online status
         await db.collection('users').doc(result.user.uid).update({
             online: true,
@@ -673,6 +681,21 @@ async function register() {
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     const errorDiv = document.getElementById('registerError');
+
+    // Banned nicknames filter
+    const bannedNicknames = ['чмо', 'гнида', 'лох', 'эриклох', 'путин', 'зеленский'];
+    const lowerUsername = username.toLowerCase();
+
+    for (const banned of bannedNicknames) {
+        if (lowerUsername.includes(banned)) {
+            errorDiv.textContent = 'Недопустимый ник';
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+            return;
+        }
+    }
 
     try {
         const result = await auth.createUserWithEmailAndPassword(email, password);
@@ -843,19 +866,17 @@ function refreshChatMessages() {
 
 function sendMessage() {
     const messageInput = document.getElementById('messageInput');
-    const message = messageInput.value.trim();
+    let message = messageInput.value.trim();
 
     if (!message || !currentUser) return;
 
-    // Profanity filter
-    const bannedWords = ['бля', 'пизда', 'хуй', 'ебан', 'ебать', 'сука', 'сука', 'пидор', 'гандон', 'мудак', 'ахуе', 'ахуенный', 'блядь', 'ебучий', 'заебал', 'наебал', 'пиздец'];
+    // Profanity filter with replacement
+    const bannedWords = ['чмо', 'гнида', 'лох', 'еб', 'хуй', 'пизд', 'бля', 'сука', 'пидор', 'гандон', 'мудак', 'ахуе', 'ахуенный', 'блядь', 'ебучий', 'заебал', 'наебал', 'пиздец'];
     const lowerMessage = message.toLowerCase();
 
     for (const word of bannedWords) {
-        if (lowerMessage.includes(word)) {
-            showSystemMessage('Сообщение содержит запрещённые слова');
-            return;
-        }
+        const regex = new RegExp(word, 'gi');
+        message = message.replace(regex, '***');
     }
 
     const messageData = {
