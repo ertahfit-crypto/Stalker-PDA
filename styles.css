@@ -2001,6 +2001,65 @@ body {
     }
 }
 
+/* Activity Graph Container */
+.activity-graph-container {
+    margin: 30px 0;
+    padding: 20px;
+    background: rgba(11, 11, 11, 0.9);
+    border: 1px solid var(--border-yellow);
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(212, 160, 23, 0.2);
+}
+
+.graph-wrapper {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+.activity-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(212, 160, 23, 0.3);
+}
+
+.activity-label {
+    color: var(--dirty-yellow);
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.activity-value {
+    color: #d4a017;
+    font-size: 16px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(212, 160, 23, 0.5);
+}
+
+@media (max-width: 480px) {
+    .activity-graph-container {
+        padding: 15px;
+        margin: 20px 0;
+    }
+
+    .graph-wrapper {
+        height: 200px;
+    }
+
+    .activity-label {
+        font-size: 10px;
+    }
+
+    .activity-value {
+        font-size: 14px;
+    }
+}
+
 /* Interesting Facts Section */
 .facts-container {
     padding: 30px;

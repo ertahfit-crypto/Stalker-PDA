@@ -10,6 +10,7 @@
     <meta name="theme-color" content="#d4a017">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="industrial-theme">
     <!-- Эффекты старого телевизора -->
@@ -148,6 +149,20 @@
                     <span class="stat-icon">🧍</span>
                     <span class="stat-label">ВСЕГО:</span>
                     <span class="stat-value" id="totalUsers">0</span>
+                </div>
+            </div>
+
+            <!-- График активности -->
+            <div class="activity-graph-container">
+                <div class="zone-status-header">
+                    <span class="zone-title">📈 АКТИВНОСТЬ ЗОНЫ</span>
+                </div>
+                <div class="graph-wrapper">
+                    <canvas id="activityChart"></canvas>
+                </div>
+                <div class="activity-status">
+                    <span class="activity-label">☢️ СТАТУС АКТИВНОСТИ:</span>
+                    <span class="activity-value" id="activityStatus">СПОКОЙНО</span>
                 </div>
             </div>
 

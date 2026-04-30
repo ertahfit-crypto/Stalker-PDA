@@ -22,6 +22,8 @@ let usersListener = null;
 let usersMap = {};
 let userProfile = null;
 let statsListener = null;
+let activityChart = null;
+let activityListener = null;
 
 // Данные о локациях
 const locations = {
@@ -175,6 +177,183 @@ function initializeStatistics() {
         .onSnapshot(snapshot => {
             messagesTodayEl.textContent = snapshot.size;
         });
+
+    // Initialize activity chart
+    initializeActivityChart();
+}
+
+// Activity Chart
+function initializeActivityChart() {
+    const canvas = document.getElementById('activityChart');
+    if (!canvas) return;
+
+    // Initialize chart with empty data
+    const ctx = canvas.getContext('2d');
+    const hours = Array.from({ length: 24 }, (_, i) => `${i.toString().padStart(2, '0')}:00`);
+    const data = new Array(24).fill(0);
+
+    activityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours,
+            datasets: [{
+                label: 'Сообщения',
+                data: data,
+                borderColor: '#d4a017',
+                backgroundColor: 'rgba(212, 160, 23, 0.1)',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: '#d4a017',
+                pointBorderColor: '#0b0b0b',
+                pointBorderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(11, 11, 11, 0.9)',
+                    titleColor: '#d4a017',
+                    bodyColor: '#d4a017',
+                    borderColor: '#d4a017',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(212, 160, 23, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#d4a017',
+                        font: {
+                            size: 10,
+                            family: 'VT323'
+                        },
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(212, 160, 23, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#d4a017',
+                        font: {
+                            size: 10,
+                            family: 'VT323'
+                        },
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Load initial data
+    loadActivityData();
+
+    // Set up realtime updates
+    setupActivityListener();
+}
+
+function loadActivityData() {
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
+    // Fetch messages from last 24 hours
+    db.collection('chatMessages')
+        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(yesterday))
+        .orderBy('timestamp', 'desc')
+        .limit(300)
+        .get()
+        .then(snapshot => {
+            const hourlyData = new Array(24).fill(0);
+
+            snapshot.forEach(doc => {
+                const message = doc.data();
+                if (message.timestamp) {
+                    const date = message.timestamp.toDate();
+                    const hour = date.getHours();
+                    hourlyData[hour]++;
+                }
+            });
+
+            // Update chart
+            if (activityChart) {
+                activityChart.data.datasets[0].data = hourlyData;
+                activityChart.update();
+                updateActivityStatus(hourlyData);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading activity data:', error);
+        });
+}
+
+function setupActivityListener() {
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
+    activityListener = db.collection('chatMessages')
+        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(yesterday))
+        .orderBy('timestamp', 'desc')
+        .limit(300)
+        .onSnapshot(snapshot => {
+            const hourlyData = new Array(24).fill(0);
+
+            snapshot.forEach(doc => {
+                const message = doc.data();
+                if (message.timestamp) {
+                    const date = message.timestamp.toDate();
+                    const hour = date.getHours();
+                    hourlyData[hour]++;
+                }
+            });
+
+            if (activityChart) {
+                activityChart.data.datasets[0].data = hourlyData;
+                activityChart.update();
+                updateActivityStatus(hourlyData);
+            }
+        });
+}
+
+function updateActivityStatus(hourlyData) {
+    const activityStatusEl = document.getElementById('activityStatus');
+    if (!activityStatusEl) return;
+
+    const totalMessages = hourlyData.reduce((a, b) => a + b, 0);
+    const avgPerHour = totalMessages / 24;
+
+    let status = 'СПОКОЙНО';
+    let color = '#4caf50';
+
+    if (avgPerHour > 15) {
+        status = 'ОПАСНО';
+        color = '#f44336';
+    } else if (avgPerHour > 5) {
+        status = 'АКТИВНОСТЬ';
+        color = '#ff9800';
+    }
+
+    activityStatusEl.textContent = status;
+    activityStatusEl.style.color = color;
 }
 
 // Логика установки PWA
