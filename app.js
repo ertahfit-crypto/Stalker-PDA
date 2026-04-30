@@ -479,9 +479,22 @@ function switchSection(sectionName) {
 
 // Аутентификация
 function checkAuthState() {
-    auth.onAuthStateChanged(function(user) {
-        currentUser = user;
+    auth.onAuthStateChanged(async function(user) {
         if (user) {
+            // Load user role from Firebase
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const userData = userDoc.data();
+            const role = userData ? userData.role : 'user';
+
+            currentUser = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                role: role
+            };
+
+            console.log('Auth state changed - user role:', currentUser.role);
+
             // Set online status when user is authenticated
             db.collection('users').doc(user.uid).update({
                 online: true,
@@ -489,6 +502,8 @@ function checkAuthState() {
             }).catch(() => {
                 // Ignore if user document doesn't exist yet
             });
+        } else {
+            currentUser = null;
         }
         updateUserInterface(user);
     });
@@ -659,6 +674,21 @@ async function login() {
                 role: 'admin'
             });
         }
+
+        // Load user role from Firebase
+        const userDoc = await db.collection('users').doc(result.user.uid).get();
+        const userData = userDoc.data();
+        const role = userData ? userData.role : 'user';
+
+        // Update currentUser with role
+        currentUser = {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            role: role
+        };
+
+        console.log('User logged in with role:', currentUser.role);
 
         // Set online status
         await db.collection('users').doc(result.user.uid).update({
@@ -906,10 +936,7 @@ function addMessageToChat(message) {
 
     const isOwnMessage = currentUser && message.userId === currentUser.uid;
     const isDeleted = message.deleted;
-
-    // Get current user's role from usersMap or userProfile
-    const currentUserData = currentUser ? (usersMap[currentUser.uid] || userProfile) : null;
-    const isAdmin = currentUserData && currentUserData.role === 'admin';
+    const isAdmin = currentUser && currentUser.role === 'admin';
 
     // Получаем актуальные данные пользователя из usersMap
     const userData = usersMap[message.userId] || {
