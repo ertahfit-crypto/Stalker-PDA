@@ -673,17 +673,37 @@ async function register() {
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     const errorDiv = document.getElementById('registerError');
-    
+
     try {
         const result = await auth.createUserWithEmailAndPassword(email, password);
-        
+
         // Обновляем displayName
         await result.user.updateProfile({
             displayName: username
         });
-        
+
+        // Check if this is the first user (make them admin)
+        const usersSnapshot = await db.collection('users').limit(1).get();
+        const isFirstUser = usersSnapshot.empty;
+
+        // Create user profile with default role
+        await db.collection('users').doc(result.user.uid).set({
+            nickname: username,
+            email: email,
+            avatar: '/images/default-avatar.png',
+            status: 'Новичок',
+            about: '',
+            level: 1,
+            xp: 0,
+            role: isFirstUser ? 'admin' : 'user',
+            online: true,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
         switchSection('home');
-        showSystemMessage('Регистрация завершена. Добро пожаловать в Зону, ' + username);
+        const roleMsg = isFirstUser ? ' (первый пользователь - АДМИН)' : '';
+        showSystemMessage('Регистрация завершена. Добро пожаловать в Зону, ' + username + roleMsg);
     } catch (error) {
         errorDiv.textContent = 'Ошибка регистрации: ' + getErrorMessage(error.code);
         errorDiv.style.display = 'block';
@@ -709,6 +729,32 @@ function logout() {
             switchSection('home');
             showSystemMessage('Выход из системы выполнен');
         });
+    }
+}
+
+// Временная функция для назначения админа по email (вызвать в консоли браузера)
+async function makeAdminByEmail(email) {
+    try {
+        const usersSnapshot = await db.collection('users').where('email', '==', email).get();
+        if (usersSnapshot.empty) {
+            console.log('Пользователь не найден');
+            return;
+        }
+        const userDoc = usersSnapshot.docs[0];
+        await userDoc.ref.update({ role: 'admin' });
+        console.log('Пользователь', email, 'теперь админ');
+    } catch (error) {
+        console.error('Ошибка:', error);
+    }
+}
+
+// Временная функция для назначения админа по UID (вызвать в консоли браузера)
+async function makeAdminByUID(uid) {
+    try {
+        await db.collection('users').doc(uid).update({ role: 'admin' });
+        console.log('Пользователь с UID', uid, 'теперь админ');
+    } catch (error) {
+        console.error('Ошибка:', error);
     }
 }
 
@@ -739,7 +785,8 @@ function initializeChat() {
                         const userData = change.doc.data();
                         usersMap[change.doc.id] = {
                             nickname: userData.nickname || 'Stalker',
-                            avatar: userData.avatar || '/images/default-avatar.png'
+                            avatar: userData.avatar || '/images/default-avatar.png',
+                            role: userData.role || 'user'
                         };
                     } else if (change.type === 'removed') {
                         delete usersMap[change.doc.id];
@@ -800,6 +847,17 @@ function sendMessage() {
 
     if (!message || !currentUser) return;
 
+    // Profanity filter
+    const bannedWords = ['бля', 'пизда', 'хуй', 'ебан', 'ебать', 'сука', 'сука', 'пидор', 'гандон', 'мудак', 'ахуе', 'ахуенный', 'блядь', 'ебучий', 'заебал', 'наебал', 'пиздец'];
+    const lowerMessage = message.toLowerCase();
+
+    for (const word of bannedWords) {
+        if (lowerMessage.includes(word)) {
+            showSystemMessage('Сообщение содержит запрещённые слова');
+            return;
+        }
+    }
+
     const messageData = {
         text: message,
         userId: currentUser.uid,
@@ -827,11 +885,13 @@ function addMessageToChat(message) {
 
     const isOwnMessage = currentUser && message.userId === currentUser.uid;
     const isDeleted = message.deleted;
+    const isAdmin = currentUser && userProfile && userProfile.role === 'admin';
 
     // Получаем актуальные данные пользователя из usersMap
     const userData = usersMap[message.userId] || {
         nickname: message.user || 'Stalker',
-        avatar: message.avatar || '/images/default-avatar.png'
+        avatar: message.avatar || '/images/default-avatar.png',
+        role: 'user'
     };
 
     messageDiv.className = 'user-log';
@@ -844,15 +904,18 @@ function addMessageToChat(message) {
         messageContent = `<span class="log-text">${message.text}</span>`;
     }
 
+    const adminBadge = userData.role === 'admin' ? '<span class="admin-badge">[ADMIN]</span>' : '';
+    const canDelete = (isOwnMessage || isAdmin) && !isDeleted;
+
     messageDiv.innerHTML = `
         <span class="log-time">[${timestamp}]</span>
         <div class="message-content-wrapper">
             <img src="${userData.avatar}" class="message-avatar" alt="${userData.nickname}">
             <div class="message-text-wrapper">
-                <span class="message-nickname">${userData.nickname}</span>
+                <span class="message-nickname">${userData.nickname} ${adminBadge}</span>
                 ${messageContent}
             </div>
-            ${isOwnMessage && !isDeleted ? `<button class="delete-message-btn" onclick="deleteMessage('${message.id}')" title="Удалить сообщение">🗑️</button>` : ''}
+            ${canDelete ? `<button class="delete-message-btn" onclick="deleteMessage('${message.id}')" title="Удалить сообщение">🗑️</button>` : ''}
         </div>
     `;
 
