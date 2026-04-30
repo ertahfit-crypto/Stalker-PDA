@@ -30,6 +30,7 @@ let currentChatMode = 'general';
 let privateChatListener = null;
 let currentPrivateChatId = null;
 let privateChatsListener = null;
+let allUsersList = [];
 
 // Данные о локациях
 const locations = {
@@ -487,9 +488,31 @@ function switchSection(sectionName) {
 function checkAuthState() {
     auth.onAuthStateChanged(async function(user) {
         if (user) {
-            // Load user role from Firebase
+            // Check if user document exists
             const userDoc = await db.collection('users').doc(user.uid).get();
-            const userData = userDoc.data();
+
+            if (!userDoc.exists) {
+                // Create user document with default values
+                const defaultRole = user.email === 'erikmetr6546@gmail.com' ? 'admin' : 'user';
+                await db.collection('users').doc(user.uid).set({
+                    nickname: 'Stalker',
+                    avatar: '/images/default-avatar.png',
+                    role: defaultRole,
+                    email: user.email
+                });
+                console.log('Created new user document on auth state change with role:', defaultRole);
+            } else {
+                // Update admin role for specific email
+                if (user.email === 'erikmetr6546@gmail.com') {
+                    await db.collection('users').doc(user.uid).update({
+                        role: 'admin'
+                    });
+                }
+            }
+
+            // Load user role from Firebase
+            const updatedUserDoc = await db.collection('users').doc(user.uid).get();
+            const userData = updatedUserDoc.data();
             const role = userData ? userData.role : 'user';
 
             currentUser = {
@@ -674,16 +697,31 @@ async function login() {
     try {
         const result = await auth.signInWithEmailAndPassword(email, password);
 
-        // Auto-assign admin role for specific email
-        if (email === 'erikmetr6546@gmail.com') {
-            await db.collection('users').doc(result.user.uid).update({
-                role: 'admin'
+        // Check if user document exists
+        const userDoc = await db.collection('users').doc(result.user.uid).get();
+
+        if (!userDoc.exists) {
+            // Create user document with default values
+            const defaultRole = email === 'erikmetr6546@gmail.com' ? 'admin' : 'user';
+            await db.collection('users').doc(result.user.uid).set({
+                nickname: 'Stalker',
+                avatar: '/images/default-avatar.png',
+                role: defaultRole,
+                email: email
             });
+            console.log('Created new user document with role:', defaultRole);
+        } else {
+            // Update admin role for specific email
+            if (email === 'erikmetr6546@gmail.com') {
+                await db.collection('users').doc(result.user.uid).update({
+                    role: 'admin'
+                });
+            }
         }
 
         // Load user role from Firebase
-        const userDoc = await db.collection('users').doc(result.user.uid).get();
-        const userData = userDoc.data();
+        const updatedUserDoc = await db.collection('users').doc(result.user.uid).get();
+        const userData = updatedUserDoc.data();
         const role = userData ? userData.role : 'user';
 
         // Update currentUser with role
@@ -988,6 +1026,7 @@ function switchChatMode(mode) {
         privateChatBtn.classList.add('active');
         generalChat.style.display = 'none';
         privateChat.style.display = 'flex';
+        loadAllUsers();
         loadPrivateChatsList();
     }
 }
@@ -997,63 +1036,83 @@ function getChatId(uid1, uid2) {
     return [uid1, uid2].sort().join('_');
 }
 
+function normalize(text) {
+    return text
+        .toLowerCase()
+        .replace(/ё/g, "е")
+        .trim();
+}
+
+function loadAllUsers() {
+    db.collection('users').get()
+        .then(snapshot => {
+            allUsersList = [];
+            snapshot.forEach(doc => {
+                const userData = doc.data();
+                allUsersList.push({
+                    uid: doc.id,
+                    nickname: userData.nickname || 'Stalker',
+                    avatar: userData.avatar || '/images/default-avatar.png'
+                });
+            });
+            console.log('Loaded all users:', allUsersList.length);
+        })
+        .catch(error => {
+            console.error('Error loading users:', error);
+        });
+}
+
 function filterPrivateChats() {
     const searchInput = document.getElementById('privateChatSearch');
-    const query = searchInput.value.toLowerCase().trim();
-    const chatItems = document.querySelectorAll('.private-chat-item');
+    const query = normalize(searchInput.value);
+    const privateChatsList = document.getElementById('privateChatsList');
 
     if (query === '') {
-        // Show all if search is empty
-        chatItems.forEach(item => {
-            item.style.display = 'flex';
-        });
+        // Show existing chats when search is empty
+        loadPrivateChatsList();
         return;
     }
 
-    // Sort items: starts with query first, then includes
-    const itemsArray = Array.from(chatItems);
-    const matches = [];
-
-    itemsArray.forEach(item => {
-        const nickname = item.querySelector('.private-chat-item-name').textContent.toLowerCase();
-        if (nickname.includes(query)) {
-            const startsWith = nickname.startsWith(query);
-            matches.push({ item, startsWith, nickname });
-        }
+    // Search through all users
+    const matches = allUsersList.filter(user => {
+        if (user.uid === currentUser.uid) return false; // Don't show self
+        const name = normalize(user.nickname);
+        return name.includes(query);
     });
 
-    // Sort: starts with first, then by nickname
+    // Sort: starts with query first, then by nickname
     matches.sort((a, b) => {
-        if (a.startsWith && !b.startsWith) return -1;
-        if (!a.startsWith && b.startsWith) return 1;
-        return a.nickname.localeCompare(b.nickname);
+        const aName = normalize(a.nickname);
+        const bName = normalize(b.nickname);
+
+        if (aName.startsWith(query) && !bName.startsWith(query)) return -1;
+        if (!aName.startsWith(query) && bName.startsWith(query)) return 1;
+        return aName.localeCompare(bName);
     });
 
-    // Hide all first
-    chatItems.forEach(item => {
-        item.style.display = 'none';
-    });
-
-    // Show sorted matches
-    matches.forEach(({ item }) => {
-        item.style.display = 'flex';
-    });
-
-    // Show "nothing found" if no matches
-    const privateChatsList = document.getElementById('privateChatsList');
-    let nothingFound = privateChatsList.querySelector('.nothing-found');
+    // Clear list and show results
+    privateChatsList.innerHTML = '';
 
     if (matches.length === 0) {
-        if (!nothingFound) {
-            nothingFound = document.createElement('div');
-            nothingFound.className = 'system-log nothing-found';
-            nothingFound.innerHTML = '<span class="log-text">Ничего не найдено</span>';
-            privateChatsList.appendChild(nothingFound);
-        }
-        nothingFound.style.display = 'block';
-    } else if (nothingFound) {
-        nothingFound.style.display = 'none';
+        privateChatsList.innerHTML = '<div class="system-log nothing-found"><span class="log-text">Ничего не найдено</span></div>';
+        return;
     }
+
+    matches.forEach(user => {
+        const chatItem = document.createElement('div');
+        chatItem.className = 'private-chat-item';
+        chatItem.onclick = () => startPrivateChatWithUser(user.uid);
+
+        chatItem.innerHTML = `
+            <img src="${user.avatar}" alt="${user.nickname}">
+            <div class="private-chat-item-info">
+                <div class="private-chat-item-name">${user.nickname}</div>
+                <div class="private-chat-item-last">Начать диалог</div>
+            </div>
+        `;
+
+        privateChatsList.appendChild(chatItem);
+    });
 }
 
 function loadPrivateChatsList() {
@@ -1098,6 +1157,12 @@ function loadPrivateChatsList() {
                         new Date(chatData.updatedAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
                         '';
 
+                    const unreadCount = chatData.unreadCount && chatData.unreadCount[currentUser.uid] ?
+                        chatData.unreadCount[currentUser.uid] : 0;
+
+                    const badgeHtml = unreadCount > 0 ?
+                        `<div class="unread-badge">${unreadCount}</div>` : '';
+
                     chatItem.innerHTML = `
                         <img src="${otherUser.avatar}" alt="${otherUser.nickname}">
                         <div class="private-chat-item-info">
@@ -1105,6 +1170,7 @@ function loadPrivateChatsList() {
                             <div class="private-chat-item-last">${lastMessage}</div>
                             <div class="private-chat-item-time">${updatedAt}</div>
                         </div>
+                        ${badgeHtml}
                     `;
 
                     privateChatsList.appendChild(chatItem);
@@ -1124,6 +1190,13 @@ function openPrivateChat(chatId, otherUser) {
     privateChatView.style.display = 'flex';
     privateChatTitle.textContent = otherUser.nickname;
     privateChatMessages.innerHTML = '';
+
+    // Reset unread count for current user
+    db.collection('privateChats').doc(chatId).update({
+        [`unreadCount.${currentUser.uid}`]: 0
+    }).catch(error => {
+        console.error('Error resetting unread count:', error);
+    });
 
     if (privateChatListener) {
         privateChatListener();
@@ -1191,7 +1264,7 @@ function sendPrivateMessage() {
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // Ensure chat document exists before sending message
+    // Get chat document to find receiver
     db.collection('privateChats').doc(currentPrivateChatId).get()
         .then(doc => {
             if (!doc.exists) {
@@ -1201,28 +1274,43 @@ function sendPrivateMessage() {
                     users: uids,
                     lastMessage: '',
                     lastSenderId: '',
+                    unreadCount: {
+                        [uids[0]]: 0,
+                        [uids[1]]: 0
+                    },
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
+            return doc;
         })
-        .then(() => {
+        .then(doc => {
+            // Find receiver ID
+            const chatData = doc.data ? doc.data() : doc;
+            const receiverId = chatData.users.find(uid => uid !== currentUser.uid);
+
             // Send message
             return db.collection('privateChats')
                 .doc(currentPrivateChatId)
                 .collection('messages')
-                .add(messageData);
-        })
-        .then(() => {
-            messageInput.value = '';
-            lastMessageTime = now;
+                .add(messageData)
+                .then(() => {
+                    messageInput.value = '';
+                    lastMessageTime = now;
 
-            // Update last message in chat document
-            return db.collection('privateChats')
-                .doc(currentPrivateChatId)
-                .update({
-                    lastMessage: message,
-                    lastSenderId: currentUser.uid,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    // Update chat document with last message and unread count
+                    const updateData = {
+                        lastMessage: message,
+                        lastSenderId: currentUser.uid,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    // Increment unread count for receiver, reset for sender
+                    updateData[`unreadCount.${receiverId}`] = firebase.firestore.FieldValue.increment(1);
+                    updateData[`unreadCount.${currentUser.uid}`] = 0;
+
+                    return db.collection('privateChats')
+                        .doc(currentPrivateChatId)
+                        .update(updateData);
                 });
         })
         .catch(error => {
@@ -1303,6 +1391,10 @@ function startPrivateChatWithUser(userId) {
                     users: users,
                     lastMessage: '',
                     lastSenderId: '',
+                    unreadCount: {
+                        [currentUser.uid]: 0,
+                        [userId]: 0
+                    },
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
