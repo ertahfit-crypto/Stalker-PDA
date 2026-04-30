@@ -21,6 +21,7 @@ let userListener = null;
 let usersListener = null;
 let usersMap = {};
 let userProfile = null;
+let statsListener = null;
 
 // Данные о локациях
 const locations = {
@@ -143,6 +144,39 @@ function registerServiceWorker() {
     }
 }
 
+// Статистика в реальном времени
+function initializeStatistics() {
+    const onlineCountEl = document.getElementById('onlineCount');
+    const messagesTodayEl = document.getElementById('messagesToday');
+    const totalUsersEl = document.getElementById('totalUsers');
+
+    if (!onlineCountEl || !messagesTodayEl || !totalUsersEl) return;
+
+    // Listen to users collection for online count and total users
+    statsListener = db.collection('users').onSnapshot(snapshot => {
+        let onlineCount = 0;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.online === true) {
+                onlineCount++;
+            }
+        });
+
+        onlineCountEl.textContent = onlineCount;
+        totalUsersEl.textContent = snapshot.size;
+    });
+
+    // Listen to messages collection for today's messages
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    db.collection('chatMessages')
+        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(today))
+        .onSnapshot(snapshot => {
+            messagesTodayEl.textContent = snapshot.size;
+        });
+}
+
 // Логика установки PWA
 let deferredPrompt;
 const pwaInstallBtn = document.getElementById('pwaInstallBtn');
@@ -182,6 +216,9 @@ function initializeApp() {
     // Показываем кнопку мобильного меню на маленьких экранах
     checkMobileView();
     window.addEventListener('resize', checkMobileView);
+
+    // Инициализируем статистику
+    initializeStatistics();
 }
 
 function checkMobileView() {
@@ -265,7 +302,23 @@ function switchSection(sectionName) {
 function checkAuthState() {
     auth.onAuthStateChanged(function(user) {
         currentUser = user;
+        if (user) {
+            // Set online status when user is authenticated
+            db.collection('users').doc(user.uid).update({
+                online: true,
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(() => {
+                // Ignore if user document doesn't exist yet
+            });
+        }
         updateUserInterface(user);
+    });
+
+    // Set offline status when page is closed
+    window.addEventListener('beforeunload', () => {
+        if (currentUser) {
+            navigator.sendBeacon('/api/offline', JSON.stringify({ uid: currentUser.uid }));
+        }
     });
 }
 
@@ -417,9 +470,14 @@ async function login() {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     const errorDiv = document.getElementById('loginError');
-    
+
     try {
-        await auth.signInWithEmailAndPassword(email, password);
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        // Set online status
+        await db.collection('users').doc(result.user.uid).update({
+            online: true,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        });
         switchSection('home');
         showSystemMessage('Успешный вход в систему, сталкер');
     } catch (error) {
@@ -457,10 +515,22 @@ async function register() {
 }
 
 function logout() {
-    auth.signOut().then(() => {
-        switchSection('home');
-        showSystemMessage('Выход из системы выполнен');
-    });
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).update({
+            online: false,
+            lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            auth.signOut().then(() => {
+                switchSection('home');
+                showSystemMessage('Выход из системы выполнен');
+            });
+        });
+    } else {
+        auth.signOut().then(() => {
+            switchSection('home');
+            showSystemMessage('Выход из системы выполнен');
+        });
+    }
 }
 
 function getErrorMessage(errorCode) {

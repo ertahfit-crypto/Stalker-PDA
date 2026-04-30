@@ -49,6 +49,12 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// Offline status endpoint (for beforeunload)
+app.post('/api/offline', express.json(), (req, res) => {
+    // This is a fallback - actual offline status should be handled by Firebase
+    res.json({ success: true });
+});
+
 // Запуск сервера
 app.listen(PORT, () => {
     console.log(`S.T.A.L.K.E.R. PDA сервер запущен на порту ${PORT}`);
