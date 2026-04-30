@@ -366,7 +366,7 @@ function loadUserProfile(user) {
             // Создаём профиль если его нет
             const defaultProfile = {
                 nickname: user.displayName || user.email.split('@')[0] || 'Stalker',
-                avatar: 'https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S',
+                avatar: '/images/default-avatar.png',
                 status: 'Новичок',
                 about: '',
                 level: 1,
@@ -490,7 +490,7 @@ function initializeChat() {
                         const userData = change.doc.data();
                         usersMap[change.doc.id] = {
                             nickname: userData.nickname || 'Stalker',
-                            avatar: userData.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S'
+                            avatar: userData.avatar || '/images/default-avatar.png'
                         };
                     } else if (change.type === 'removed') {
                         delete usersMap[change.doc.id];
@@ -582,7 +582,7 @@ function addMessageToChat(message) {
     // Получаем актуальные данные пользователя из usersMap
     const userData = usersMap[message.userId] || {
         nickname: message.user || 'Stalker',
-        avatar: message.avatar || 'https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S'
+        avatar: message.avatar || '/images/default-avatar.png'
     };
 
     messageDiv.className = 'user-log';
@@ -875,7 +875,7 @@ function saveProfileSettings() {
     
     // Сохраняем в Firestore users collection
     const avatarPreview = document.getElementById('avatarPreview');
-    const avatarUrl = avatarPreview ? avatarPreview.src : userProfile?.avatar || 'https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S';
+    const avatarUrl = avatarPreview ? avatarPreview.src : userProfile?.avatar || '/images/default-avatar.png';
     
     db.collection('users').doc(currentUser.uid).update({
         nickname: nickname,
@@ -896,7 +896,7 @@ function resetAvatar() {
     const userAvatar = document.getElementById('userAvatar');
     const userAvatarLarge = document.getElementById('userAvatarLarge');
     
-    const defaultAvatar = 'https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S';
+    const defaultAvatar = '/images/default-avatar.png';
     
     if (avatarPreview) avatarPreview.src = defaultAvatar;
     if (userAvatar) userAvatar.src = defaultAvatar;

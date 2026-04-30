@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&family=Russo+One&display=swap" rel="stylesheet">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#d4a017">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body class="industrial-theme">
     <!-- Эффекты старого телевизора -->
@@ -49,7 +51,7 @@
             <div class="profile-section" id="profileSection" style="display: none;">
                 <div class="profile-dropdown" onclick="toggleProfileDropdown()">
                     <div class="profile-avatar">
-                        <img src="https://via.placeholder.com/40x40/d4a017/0b0b0b?text=S" alt="Avatar" id="userAvatar">
+                        <img src="/images/default-avatar.png" alt="Avatar" id="userAvatar">
                     </div>
                     <div class="profile-info">
                         <span class="profile-nickname" id="userNickname">Stalker_Zone</span>
@@ -62,7 +64,7 @@
                     <div class="profile-header">
                         <button class="mobile-close-btn" onclick="toggleMobileProfile()" style="display: none;">✕</button>
                         <div class="profile-avatar-large">
-                            <img src="https://via.placeholder.com/80x80/d4a017/0b0b0b?text=S" alt="Avatar" id="userAvatarLarge">
+                            <img src="/images/default-avatar.png" alt="Avatar" id="userAvatarLarge">
                         </div>
                         <div class="profile-details">
                             <h3 class="profile-name" id="profileName">Stalker_Zone</h3>
@@ -401,7 +403,7 @@
                         <h3 class="settings-title">АВАТАР</h3>
                         <div class="avatar-upload">
                             <div class="avatar-preview">
-                                <img src="https://via.placeholder.com/100x100/d4a017/0b0b0b?text=S" alt="Avatar Preview" id="avatarPreview">
+                                <img src="/images/default-avatar.png" alt="Avatar Preview" id="avatarPreview">
                             </div>
                             <div class="avatar-controls">
                                 <input type="file" id="avatarInput" accept="image/*" style="display: none;">
