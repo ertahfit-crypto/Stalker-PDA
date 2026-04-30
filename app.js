@@ -906,7 +906,10 @@ function addMessageToChat(message) {
 
     const isOwnMessage = currentUser && message.userId === currentUser.uid;
     const isDeleted = message.deleted;
-    const isAdmin = currentUser && userProfile && userProfile.role === 'admin';
+
+    // Get current user's role from usersMap or userProfile
+    const currentUserData = currentUser ? (usersMap[currentUser.uid] || userProfile) : null;
+    const isAdmin = currentUserData && currentUserData.role === 'admin';
 
     // Получаем актуальные данные пользователя из usersMap
     const userData = usersMap[message.userId] || {
