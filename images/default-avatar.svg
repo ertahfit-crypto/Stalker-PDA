@@ -2,5 +2,8 @@
   <rect width="100" height="100" fill="#0b0b0b"/>
   <circle cx="50" cy="50" r="40" fill="none" stroke="#d4a017" stroke-width="4"/>
   <circle cx="50" cy="50" r="8" fill="#d4a017"/>
-  <path d="M50 42 L50 10 M50 90 L50 58 M42 50 L10 50 M90 50 L58 50" stroke="#d4a017" stroke-width="4" stroke-linecap="round"/>
+  <!-- Three sectors of radiation symbol -->
+  <path d="M50 42 L50 12 A38 38 0 0 1 82.9 31 L58 50 Z" fill="#d4a017"/>
+  <path d="M58 50 L82.9 69 A38 38 0 0 1 17.1 69 L42 50 Z" fill="#d4a017"/>
+  <path d="M42 50 L17.1 31 A38 38 0 0 1 50 12 L50 42 Z" fill="#d4a017"/>
 </svg>

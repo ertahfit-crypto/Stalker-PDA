@@ -44,19 +44,22 @@ function createRadiationIcon(size) {
                 pixels[idx + 2] = 23;
             }
             
-            // Rays (4 directions)
+            // Three sectors (classic radiation symbol)
             const angle = Math.atan2(dy, dx);
-            const rayWidth = strokeWidth;
             const innerR = centerRadius + strokeWidth;
             const outerR = radius - strokeWidth;
             
-            for (let ray = 0; ray < 4; ray++) {
-                const rayAngle = ray * Math.PI / 2;
-                const angleDiff = Math.abs(angle - rayAngle);
-                const angleDiff2 = Math.abs(angle - rayAngle - Math.PI * 2);
-                const minDiff = Math.min(angleDiff, angleDiff2);
+            // Each sector is 60 degrees wide, starting at -90, 30, 150 degrees
+            const sectorAngles = [-Math.PI / 2, Math.PI / 6, 5 * Math.PI / 6];
+            
+            for (const sectorAngle of sectorAngles) {
+                const angleDiff = Math.abs(angle - sectorAngle);
+                const angleDiff2 = Math.abs(angle - sectorAngle - Math.PI * 2);
+                const angleDiff3 = Math.abs(angle - sectorAngle + Math.PI * 2);
+                const minDiff = Math.min(angleDiff, angleDiff2, angleDiff3);
                 
-                if (minDiff < 0.1 && dist > innerR && dist < outerR) {
+                // Sector width is about 30 degrees (0.52 radians)
+                if (minDiff < 0.52 && dist > innerR && dist < outerR) {
                     pixels[idx] = 212;
                     pixels[idx + 1] = 160;
                     pixels[idx + 2] = 23;
@@ -122,6 +125,10 @@ function calculateCRC(buffer) {
 
 // Generate icons
 console.log('Generating PNG icons...');
+
+const pixels100 = createRadiationIcon(100);
+writePNG(pixels100, 100, 100, path.join(__dirname, 'images', 'default-avatar.png'));
+console.log('Created: images/default-avatar.png');
 
 const pixels192 = createRadiationIcon(192);
 writePNG(pixels192, 192, 192, path.join(__dirname, 'icon-192.png'));
