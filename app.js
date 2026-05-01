@@ -31,6 +31,10 @@ let privateChatListener = null;
 let currentPrivateChatId = null;
 let privateChatsListener = null;
 let allUsersList = [];
+let typingTimeout = null;
+let typingListener = null;
+let isCurrentlyTyping = false;
+let typingDebounceTimeout = null;
 
 // Данные о локациях
 const locations = {
@@ -500,7 +504,6 @@ function checkAuthState() {
                     role: defaultRole,
                     email: user.email
                 });
-                console.log('Created new user document on auth state change with role:', defaultRole);
             } else {
                 // Update admin role for specific email
                 if (user.email === 'erikmetr6546@gmail.com') {
@@ -522,8 +525,6 @@ function checkAuthState() {
                 role: role
             };
 
-            console.log('Auth state changed - user role:', currentUser.role);
-
             // Set online status when user is authenticated
             db.collection('users').doc(user.uid).update({
                 online: true,
@@ -531,17 +532,20 @@ function checkAuthState() {
             }).catch(() => {
                 // Ignore if user document doesn't exist yet
             });
+
+            // Set offline status when page is closed
+            window.addEventListener('beforeunload', () => {
+                db.collection('users').doc(user.uid).update({
+                    online: false,
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch(() => {
+                    // Ignore errors during page unload
+                });
+            });
         } else {
             currentUser = null;
         }
         updateUserInterface(user);
-    });
-
-    // Set offline status when page is closed
-    window.addEventListener('beforeunload', () => {
-        if (currentUser) {
-            navigator.sendBeacon('/api/offline', JSON.stringify({ uid: currentUser.uid }));
-        }
     });
 }
 
@@ -709,7 +713,6 @@ async function login() {
                 role: defaultRole,
                 email: email
             });
-            console.log('Created new user document with role:', defaultRole);
         } else {
             // Update admin role for specific email
             if (email === 'erikmetr6546@gmail.com') {
@@ -731,8 +734,6 @@ async function login() {
             displayName: result.user.displayName,
             role: role
         };
-
-        console.log('User logged in with role:', currentUser.role);
 
         // Set online status
         await db.collection('users').doc(result.user.uid).update({
@@ -834,12 +835,10 @@ async function makeAdminByEmail(email) {
     try {
         const usersSnapshot = await db.collection('users').where('email', '==', email).get();
         if (usersSnapshot.empty) {
-            console.log('Пользователь не найден');
             return;
         }
         const userDoc = usersSnapshot.docs[0];
         await userDoc.ref.update({ role: 'admin' });
-        console.log('Пользователь', email, 'теперь админ');
     } catch (error) {
         console.error('Ошибка:', error);
     }
@@ -849,7 +848,6 @@ async function makeAdminByEmail(email) {
 async function makeAdminByUID(uid) {
     try {
         await db.collection('users').doc(uid).update({ role: 'admin' });
-        console.log('Пользователь с UID', uid, 'теперь админ');
     } catch (error) {
         console.error('Ошибка:', error);
     }
@@ -883,7 +881,9 @@ function initializeChat() {
                         usersMap[change.doc.id] = {
                             nickname: userData.nickname || 'Stalker',
                             avatar: userData.avatar || '/images/default-avatar.png',
-                            role: userData.role || 'user'
+                            role: userData.role || 'user',
+                            online: userData.online || false,
+                            lastSeen: userData.lastSeen || null
                         };
                     } else if (change.type === 'removed') {
                         delete usersMap[change.doc.id];
@@ -1055,11 +1055,72 @@ function loadAllUsers() {
                     avatar: userData.avatar || '/images/default-avatar.png'
                 });
             });
-            console.log('Loaded all users:', allUsersList.length);
         })
         .catch(error => {
             console.error('Error loading users:', error);
         });
+}
+
+function setTypingStatus(isTyping) {
+    if (!currentPrivateChatId || !currentUser) {
+        return;
+    }
+
+    db.collection('privateChats').doc(currentPrivateChatId).update({
+        [`typing.${currentUser.uid}`]: isTyping
+    }).catch(error => {
+        console.error('Error setting typing status:', error);
+    });
+}
+
+function handleTyping() {
+    // Clear existing debounce timeout
+    if (typingDebounceTimeout) {
+        clearTimeout(typingDebounceTimeout);
+    }
+
+    // Debounce: only process after 500ms of inactivity
+    typingDebounceTimeout = setTimeout(() => {
+        // If already typing, don't send another true
+        if (isCurrentlyTyping) {
+            return;
+        }
+
+        isCurrentlyTyping = true;
+        setTypingStatus(true);
+
+        // Clear existing timeout
+        if (window.typingTimeout) {
+            clearTimeout(window.typingTimeout);
+        }
+
+        // Reset typing status after 2 seconds
+        window.typingTimeout = setTimeout(() => {
+            isCurrentlyTyping = false;
+            setTypingStatus(false);
+        }, 2000);
+    }, 500);
+}
+
+function showTypingIndicator(isTyping, nickname) {
+    const privateChatMessages = document.getElementById('privateChatMessages');
+    let typingIndicator = document.getElementById('typingIndicator');
+
+    if (isTyping) {
+        if (!typingIndicator) {
+            typingIndicator = document.createElement('div');
+            typingIndicator.id = 'typingIndicator';
+            typingIndicator.className = 'typing-indicator';
+            privateChatMessages.appendChild(typingIndicator);
+        }
+        typingIndicator.innerHTML = `<span class="typing-text">${nickname} печатает...</span>`;
+        typingIndicator.style.display = 'block';
+        privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
+    } else {
+        if (typingIndicator) {
+            typingIndicator.style.display = 'none';
+        }
+    }
 }
 
 function filterPrivateChats() {
@@ -1068,8 +1129,17 @@ function filterPrivateChats() {
     const privateChatsList = document.getElementById('privateChatsList');
 
     if (query === '') {
-        // Show existing chats when search is empty
-        loadPrivateChatsList();
+        // Don't reload chats - just show/hide existing items
+        const chatItems = privateChatsList.querySelectorAll('.private-chat-item');
+        chatItems.forEach(item => {
+            item.style.display = 'flex';
+        });
+
+        // Show "nothing found" if no items
+        const nothingFound = privateChatsList.querySelector('.nothing-found');
+        if (nothingFound) {
+            nothingFound.style.display = 'none';
+        }
         return;
     }
 
@@ -1125,13 +1195,10 @@ function loadPrivateChatsList() {
         privateChatsListener();
     }
 
-    console.log('Loading private chats for user:', currentUser.uid);
-
     privateChatsListener = db.collection('privateChats')
         .where('users', 'array-contains', currentUser.uid)
         .orderBy('updatedAt', 'desc')
         .onSnapshot(snapshot => {
-            console.log('Private chats snapshot size:', snapshot.size);
             privateChatsList.innerHTML = '';
 
             if (snapshot.empty) {
@@ -1141,11 +1208,8 @@ function loadPrivateChatsList() {
 
             snapshot.forEach(doc => {
                 const chatData = doc.data();
-                console.log('Chat data:', chatData);
                 const otherUserId = chatData.users.find(uid => uid !== currentUser.uid);
                 const otherUser = usersMap[otherUserId];
-
-                console.log('Other user ID:', otherUserId, 'User data:', otherUser);
 
                 if (otherUser) {
                     const chatItem = document.createElement('div');
@@ -1185,11 +1249,44 @@ function openPrivateChat(chatId, otherUser) {
     const privateChatView = document.getElementById('privateChatView');
     const privateChatTitle = document.getElementById('privateChatTitle');
     const privateChatMessages = document.getElementById('privateChatMessages');
+    const privateMessageInput = document.getElementById('privateMessageInput');
 
     privateChatsList.style.display = 'none';
     privateChatView.style.display = 'flex';
     privateChatTitle.textContent = otherUser.nickname;
     privateChatMessages.innerHTML = '';
+
+    // Add online status indicator
+    const userData = usersMap[otherUser.uid];
+    const isOnline = userData && userData.online === true;
+    const onlineIndicator = document.createElement('span');
+    onlineIndicator.className = 'online-indicator';
+    onlineIndicator.textContent = isOnline ? ' • онлайн' : '';
+    onlineIndicator.style.color = isOnline ? '#4fc3f7' : '#666';
+    onlineIndicator.style.fontSize = '14px';
+    onlineIndicator.style.marginLeft = '10px';
+    privateChatTitle.appendChild(onlineIndicator);
+
+    // Reset typing state
+    isCurrentlyTyping = false;
+
+    // Ensure typing field exists
+    db.collection('privateChats').doc(chatId).get()
+        .then(doc => {
+            const chatData = doc.data();
+            if (!chatData.typing) {
+                const users = chatData.users;
+                return db.collection('privateChats').doc(chatId).update({
+                    typing: {
+                        [users[0]]: false,
+                        [users[1]]: false
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error ensuring typing field:', error);
+        });
 
     // Reset unread count for current user
     db.collection('privateChats').doc(chatId).update({
@@ -1197,6 +1294,42 @@ function openPrivateChat(chatId, otherUser) {
     }).catch(error => {
         console.error('Error resetting unread count:', error);
     });
+
+    // Mark all incoming messages as seen
+    db.collection('privateChats')
+        .doc(chatId)
+        .collection('messages')
+        .where('senderId', '!=', currentUser.uid)
+        .where('status', 'in', ['sent', 'delivered'])
+        .get()
+        .then(snapshot => {
+            const batch = db.batch();
+            snapshot.forEach(doc => {
+                batch.update(doc.ref, { status: 'seen' });
+            });
+            return batch.commit();
+        })
+        .catch(error => {
+            console.error('Error marking messages as seen:', error);
+        });
+
+    // Add typing indicator listener
+    if (typingListener) {
+        typingListener();
+    }
+
+    typingListener = db.collection('privateChats').doc(chatId).onSnapshot(doc => {
+        const chatData = doc.data();
+        if (chatData && chatData.typing) {
+            const otherUserId = chatData.users.find(uid => uid !== currentUser.uid);
+            const isTyping = chatData.typing[otherUserId] === true;
+            showTypingIndicator(isTyping, otherUser.nickname);
+        }
+    });
+
+    // Add input event listener using addEventListener
+    privateMessageInput.removeEventListener('input', handleTyping);
+    privateMessageInput.addEventListener('input', handleTyping);
 
     if (privateChatListener) {
         privateChatListener();
@@ -1211,7 +1344,21 @@ function openPrivateChat(chatId, otherUser) {
 
             snapshot.forEach(doc => {
                 const message = doc.data();
-                addPrivateMessageToChat(message);
+                const messageId = doc.id;
+
+                // Update to delivered if message is from other user and status is sent
+                if (message.senderId !== currentUser.uid && message.status === 'sent') {
+                    db.collection('privateChats')
+                        .doc(chatId)
+                        .collection('messages')
+                        .doc(messageId)
+                        .update({ status: 'delivered' })
+                        .catch(error => {
+                            // Ignore errors (might be race condition)
+                        });
+                }
+
+                addPrivateMessageToChat(message, messageId);
             });
 
             privateChatMessages.scrollTop = privateChatMessages.scrollHeight;
@@ -1223,6 +1370,34 @@ function closePrivateChat() {
         privateChatListener();
         privateChatListener = null;
     }
+    if (typingListener) {
+        typingListener();
+        typingListener = null;
+    }
+    if (window.typingTimeout) {
+        clearTimeout(window.typingTimeout);
+        window.typingTimeout = null;
+    }
+    if (typingDebounceTimeout) {
+        clearTimeout(typingDebounceTimeout);
+        typingDebounceTimeout = null;
+    }
+
+    // Reset typing state
+    isCurrentlyTyping = false;
+
+    // Remove input event listener
+    const privateMessageInput = document.getElementById('privateMessageInput');
+    if (privateMessageInput) {
+        privateMessageInput.removeEventListener('input', handleTyping);
+    }
+
+    // Hide typing indicator
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+
     currentPrivateChatId = null;
 
     const privateChatsList = document.getElementById('privateChatsList');
@@ -1261,7 +1436,8 @@ function sendPrivateMessage() {
     const messageData = {
         text: message,
         senderId: currentUser.uid,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'sent'
     };
 
     // Get chat document to find receiver
@@ -1277,6 +1453,10 @@ function sendPrivateMessage() {
                     unreadCount: {
                         [uids[0]]: 0,
                         [uids[1]]: 0
+                    },
+                    typing: {
+                        [uids[0]]: false,
+                        [uids[1]]: false
                     },
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -1296,6 +1476,9 @@ function sendPrivateMessage() {
                 .then(() => {
                     messageInput.value = '';
                     lastMessageTime = now;
+
+                    // Reset typing status after sending message
+                    setTypingStatus(false);
 
                     // Update chat document with last message and unread count
                     const updateData = {
@@ -1319,7 +1502,20 @@ function sendPrivateMessage() {
         });
 }
 
-function addPrivateMessageToChat(message) {
+function getStatusCheckmarks(status) {
+    switch (status) {
+        case 'sent':
+            return '<span class="checkmark checkmark-sent">✓</span>';
+        case 'delivered':
+            return '<span class="checkmark checkmark-delivered">✓✓</span>';
+        case 'seen':
+            return '<span class="checkmark checkmark-seen">✓✓</span>';
+        default:
+            return '<span class="checkmark checkmark-sent">✓</span>';
+    }
+}
+
+function addPrivateMessageToChat(message, messageId) {
     const privateChatMessages = document.getElementById('privateChatMessages');
     const messageDiv = document.createElement('div');
 
@@ -1361,6 +1557,19 @@ function addPrivateMessageToChat(message) {
     textWrapper.appendChild(nicknameSpan);
     textWrapper.appendChild(logTextSpan);
 
+    // Add status checkmarks for own messages
+    if (isOwnMessage && messageId) {
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'message-status';
+        statusSpan.dataset.messageId = messageId;
+        statusSpan.dataset.status = message.status || 'sent';
+
+        const checkmarks = getStatusCheckmarks(message.status || 'sent');
+        statusSpan.innerHTML = checkmarks;
+
+        textWrapper.appendChild(statusSpan);
+    }
+
     contentWrapper.appendChild(avatarImg);
     contentWrapper.appendChild(textWrapper);
 
@@ -1394,6 +1603,10 @@ function startPrivateChatWithUser(userId) {
                     unreadCount: {
                         [currentUser.uid]: 0,
                         [userId]: 0
+                    },
+                    typing: {
+                        [currentUser.uid]: false,
+                        [userId]: false
                     },
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -1615,7 +1828,6 @@ function addGlitchEffect() {
 
 function updateTime() {
     // Можно добавить обновление времени в интерфейсе
-    console.log('Time updated');
 }
 
 // Дополнительные эффекты при наведении

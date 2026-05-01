@@ -1072,6 +1072,55 @@ body {
     box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
 }
 
+.typing-indicator {
+    padding: 10px 15px;
+    background: rgba(212, 160, 23, 0.1);
+    border-left: 3px solid var(--border-yellow);
+    margin: 10px 0;
+    animation: fadeIn 0.3s ease;
+}
+
+.typing-text {
+    color: var(--text-yellow);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    font-style: italic;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-status {
+    margin-left: 10px;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.checkmark {
+    display: inline-block;
+    margin-left: 2px;
+}
+
+.checkmark-sent {
+    color: #888;
+}
+
+.checkmark-delivered {
+    color: #666;
+}
+
+.checkmark-seen {
+    color: #4fc3f7;
+}
+
 /* Private Chat View */
 .private-chat-view {
     display: flex;
