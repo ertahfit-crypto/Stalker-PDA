@@ -280,12 +280,38 @@ function initializeActivityChart() {
 }
 
 function loadActivityData() {
+    const STORAGE_KEY = 'chartLastUpdate';
+    const UPDATE_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
     const now = new Date();
+    const lastUpdate = localStorage.getItem(STORAGE_KEY);
+    const lastUpdateTime = lastUpdate ? new Date(parseInt(lastUpdate)) : null;
+
+    // Check if 24 hours have passed since last update
+    if (lastUpdateTime && (now - lastUpdateTime < UPDATE_INTERVAL)) {
+        // Load cached data if available
+        const cachedData = localStorage.getItem('chartData');
+        if (cachedData) {
+            try {
+                const hourlyData = JSON.parse(cachedData);
+                if (activityChart) {
+                    activityChart.data.datasets[0].data = hourlyData;
+                    activityChart.update();
+                    updateActivityStatus(hourlyData);
+                }
+                return;
+            } catch (e) {
+                console.error('Error parsing cached chart data:', e);
+            }
+        }
+        return;
+    }
+
+    // Update chart and cache data
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
 
-    // Fetch messages from last 24 hours
     db.collection('chatMessages')
         .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(yesterday))
         .orderBy('timestamp', 'desc')
@@ -309,6 +335,10 @@ function loadActivityData() {
                 activityChart.update();
                 updateActivityStatus(hourlyData);
             }
+
+            // Cache data and update time
+            localStorage.setItem('chartData', JSON.stringify(hourlyData));
+            localStorage.setItem(STORAGE_KEY, now.getTime().toString());
         })
         .catch(error => {
             console.error('Error loading activity data:', error);
