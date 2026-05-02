@@ -484,7 +484,7 @@
                             <input type="text" id="nicknameInput" class="metal-input" value="Stalker_Zone">
                             <button class="metal-button" onclick="updateNickname()">ИЗМЕНИТЬ</button>
                         </div>
-                        
+
                         <div class="input-group">
                             <label for="statusSelect">СТАТУС:</label>
                             <select id="statusSelect" class="metal-input">
@@ -494,10 +494,55 @@
                                 <option value="Легенда">Легенда</option>
                             </select>
                         </div>
-                        
+
                         <div class="input-group">
                             <label for="aboutInput">О СЕБЕ:</label>
                             <textarea id="aboutInput" class="metal-input" rows="4" placeholder="Расскажи о себе...">Ищу артефакты в Зоне уже 3 года. Помогу новичкам.</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Настройки приватности -->
+                    <div class="settings-section">
+                        <h3 class="settings-title">НАСТРОЙКИ ПРИВАТНОСТИ</h3>
+
+                        <div class="toggle-item">
+                            <label class="toggle-label">Разрешить личные сообщения</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="allowPrivateMessages" onchange="handleSettingChange('allowPrivateMessages', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-item">
+                            <label class="toggle-label">Показывать онлайн статус</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="showOnlineStatus" onchange="handleSettingChange('showOnlineStatus', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-item">
+                            <label class="toggle-label">Показывать "прочитано"</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="readReceipts" onchange="handleSettingChange('readReceipts', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-item">
+                            <label class="toggle-label">Показывать последний визит</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="showLastSeen" onchange="handleSettingChange('showLastSeen', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-item">
+                            <label class="toggle-label">Уведомления</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="notificationsEnabled" onchange="handleSettingChange('notificationsEnabled', this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                     

@@ -35,6 +35,7 @@ let typingTimeout = null;
 let typingListener = null;
 let isCurrentlyTyping = false;
 let typingDebounceTimeout = null;
+let settingsDebounceTimeout = null;
 
 // Данные о локациях
 const locations = {
@@ -498,19 +499,28 @@ function setupEventListeners() {
 }
 
 function switchSection(sectionName) {
+    const section = document.getElementById(sectionName);
+    if (!section) {
+        console.error('Element not found:', sectionName);
+        return;
+    }
+
     // Скрываем все секции
-    document.querySelectorAll('.content-section').forEach(section => {
-        section.classList.remove('active');
+    document.querySelectorAll('.content-section').forEach(sec => {
+        sec.classList.remove('active');
     });
-    
+
     // Показываем выбранную секцию
-    document.getElementById(sectionName).classList.add('active');
-    
+    section.classList.add('active');
+
     // Обновляем навигацию
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
     });
-    document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+    const navLink = document.querySelector(`[data-section="${sectionName}"]`);
+    if (navLink) {
+        navLink.classList.add('active');
+    }
     
     // Специальная инициализация для чата
     if (sectionName === 'chat' && currentUser) {
@@ -532,7 +542,14 @@ function checkAuthState() {
                     nickname: 'Stalker',
                     avatar: '/images/default-avatar.png',
                     role: defaultRole,
-                    email: user.email
+                    email: user.email,
+                    settings: {
+                        allowPrivateMessages: true,
+                        showOnlineStatus: true,
+                        readReceipts: true,
+                        showLastSeen: true,
+                        notificationsEnabled: true
+                    }
                 });
             } else {
                 // Update admin role for specific email
@@ -741,7 +758,14 @@ async function login() {
                 nickname: 'Stalker',
                 avatar: '/images/default-avatar.png',
                 role: defaultRole,
-                email: email
+                email: email,
+                settings: {
+                    allowPrivateMessages: true,
+                    showOnlineStatus: true,
+                    readReceipts: true,
+                    showLastSeen: true,
+                    notificationsEnabled: true
+                }
             });
         } else {
             // Update admin role for specific email
@@ -826,7 +850,14 @@ async function register() {
             role: isFirstUser ? 'admin' : 'user',
             online: true,
             lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            settings: {
+                allowPrivateMessages: true,
+                showOnlineStatus: true,
+                readReceipts: true,
+                showLastSeen: true,
+                notificationsEnabled: true
+            }
         });
 
         switchSection('home');
@@ -1286,12 +1317,37 @@ function openPrivateChat(chatId, otherUser) {
     privateChatTitle.textContent = otherUser.nickname;
     privateChatMessages.innerHTML = '';
 
-    // Add online status indicator
+    // Add online status indicator (check if user allows showing it)
     const userData = usersMap[otherUser.uid];
-    const isOnline = userData && userData.online === true;
+    const showOnline = userData && userData.settings && userData.settings.showOnlineStatus !== false;
+    const showLastSeen = userData && userData.settings && userData.settings.showLastSeen !== false;
+    const isOnline = userData && userData.online === true && showOnline;
+
+    let statusText = '';
+    if (isOnline) {
+        statusText = ' • онлайн';
+    } else if (!isOnline && showLastSeen && userData.lastSeen) {
+        const lastSeenDate = new Date(userData.lastSeen);
+        const now = new Date();
+        const diffMs = now - lastSeenDate;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) {
+            statusText = ' • только что';
+        } else if (diffMins < 60) {
+            statusText = ` • ${diffMins} мин назад`;
+        } else if (diffHours < 24) {
+            statusText = ` • ${diffHours} ч назад`;
+        } else {
+            statusText = ` • ${diffDays} д назад`;
+        }
+    }
+
     const onlineIndicator = document.createElement('span');
     onlineIndicator.className = 'online-indicator';
-    onlineIndicator.textContent = isOnline ? ' • онлайн' : '';
+    onlineIndicator.textContent = statusText;
     onlineIndicator.style.color = isOnline ? '#4fc3f7' : '#666';
     onlineIndicator.style.fontSize = '14px';
     onlineIndicator.style.marginLeft = '10px';
@@ -1325,17 +1381,25 @@ function openPrivateChat(chatId, otherUser) {
         console.error('Error resetting unread count:', error);
     });
 
-    // Mark all incoming messages as seen
+    // Mark all incoming messages as seen (only if sender allows read receipts)
     db.collection('privateChats')
         .doc(chatId)
         .collection('messages')
         .where('senderId', '!=', currentUser.uid)
-        .where('status', 'in', ['sent', 'delivered'])
         .get()
         .then(snapshot => {
             const batch = db.batch();
             snapshot.forEach(doc => {
-                batch.update(doc.ref, { status: 'seen' });
+                const message = doc.data();
+                const messageSenderId = message.senderId;
+                const senderData = usersMap[messageSenderId];
+
+                // Only mark as seen if sender allows read receipts and status is sent/delivered
+                if (!senderData || !senderData.settings || senderData.settings.readReceipts !== false) {
+                    if (message.status === 'sent' || message.status === 'delivered') {
+                        batch.update(doc.ref, { status: 'seen' });
+                    }
+                }
             });
             return batch.commit();
         })
@@ -1497,6 +1561,13 @@ function sendPrivateMessage() {
             // Find receiver ID
             const chatData = doc.data ? doc.data() : doc;
             const receiverId = chatData.users.find(uid => uid !== currentUser.uid);
+            const receiverData = usersMap[receiverId];
+
+            // Check if receiver allows private messages
+            if (receiverData && receiverData.settings && receiverData.settings.allowPrivateMessages === false) {
+                showSystemMessage('Пользователь запретил личные сообщения');
+                return;
+            }
 
             // Send message
             return db.collection('privateChats')
@@ -1529,6 +1600,96 @@ function sendPrivateMessage() {
         .catch(error => {
             console.error('Ошибка отправки личного сообщения:', error);
             showSystemMessage('Ошибка отправки сообщения');
+        });
+}
+
+function handleSettingChange(settingKey, value) {
+    if (!currentUser) return;
+
+    // Clear existing debounce timeout
+    if (settingsDebounceTimeout) {
+        clearTimeout(settingsDebounceTimeout);
+    }
+
+    // Debounce: save after 500ms of inactivity
+    settingsDebounceTimeout = setTimeout(() => {
+        db.collection('users').doc(currentUser.uid).update({
+            [`settings.${settingKey}`]: value
+        }).then(() => {
+            // Reload user data to apply changes immediately
+            db.collection('users').doc(currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        usersMap[currentUser.uid] = {
+                            nickname: userData.nickname || 'Stalker',
+                            avatar: userData.avatar || '/images/default-avatar.png',
+                            role: userData.role || 'user',
+                            online: userData.online || false,
+                            lastSeen: userData.lastSeen || null,
+                            settings: userData.settings || {
+                                allowPrivateMessages: true,
+                                showOnlineStatus: true,
+                                readReceipts: true,
+                                showLastSeen: true,
+                                notificationsEnabled: true
+                            }
+                        };
+                    }
+                })
+                .catch(error => {
+                    console.error('Error reloading user data:', error);
+                });
+        })
+        .catch(error => {
+            console.error('Error updating setting:', error);
+        });
+    }, 500);
+}
+
+function closeProfile() {
+    const profileSection = document.getElementById('profileSection');
+    const profileMenu = document.getElementById('profileMenu');
+
+    if (profileMenu && profileMenu.classList.contains('show')) {
+        profileMenu.classList.remove('show');
+    }
+    if (profileSection && profileSection.classList.contains('active')) {
+        profileSection.classList.remove('active');
+    }
+}
+
+function loadUserSettings() {
+    if (!currentUser) return;
+
+    db.collection('users').doc(currentUser.uid).get()
+        .then(doc => {
+            if (doc.exists) {
+                const userData = doc.data();
+                const settings = userData.settings || {
+                    allowPrivateMessages: true,
+                    showOnlineStatus: true,
+                    readReceipts: true,
+                    showLastSeen: true,
+                    notificationsEnabled: true
+                };
+
+                // Update UI toggles with null checks
+                const allowDM = document.getElementById('allowPrivateMessages');
+                const showOnline = document.getElementById('showOnlineStatus');
+                const readReceipts = document.getElementById('readReceipts');
+                const showLastSeen = document.getElementById('showLastSeen');
+                const notifications = document.getElementById('notificationsEnabled');
+
+                if (allowDM) allowDM.checked = settings.allowPrivateMessages;
+                if (showOnline) showOnline.checked = settings.showOnlineStatus;
+                if (readReceipts) readReceipts.checked = settings.readReceipts;
+                if (showLastSeen) showLastSeen.checked = settings.showLastSeen;
+                if (notifications) notifications.checked = settings.notificationsEnabled;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading user settings:', error);
         });
 }
 
@@ -1617,6 +1778,12 @@ function startPrivateChatWithUser(userId) {
 
     if (!otherUser) {
         showSystemMessage('Пользователь не найден');
+        return;
+    }
+
+    // Check if other user allows private messages
+    if (otherUser.settings && otherUser.settings.allowPrivateMessages === false) {
+        showSystemMessage('Пользователь запретил личные сообщения');
         return;
     }
 
@@ -1945,7 +2112,8 @@ function openProfileSettings() {
 }
 
 function openSettings() {
-    showSystemMessage('Раздел "Настройки" в разработке');
+    loadUserSettings();
+    switchSection('profile-settings');
     toggleProfileDropdown();
 }
 
@@ -2012,6 +2180,7 @@ function saveProfileSettings() {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
         showSystemMessage('Настройки профиля сохранены');
+        closeProfile();
     }).catch(error => {
         console.error('Ошибка сохранения профиля:', error);
         showSystemMessage('Ошибка сохранения: ' + error.message);
