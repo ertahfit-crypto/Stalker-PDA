@@ -614,14 +614,17 @@
                         <span class="btn-icon">💬</span>
                         <span>Написать</span>
                     </button>
-                    <button class="profile-modal-btn block-btn" onclick="blockUserFromProfile()">
+                    <button class="profile-modal-btn block-btn" id="blockBtn" onclick="blockUserFromProfile()">
                         <span class="btn-icon">🚫</span>
-                        <span>Заблокировать</span>
+                        <span id="blockBtnText">Заблокировать</span>
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Global Overlay -->
+    <div id="overlay" class="global-overlay"></div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>

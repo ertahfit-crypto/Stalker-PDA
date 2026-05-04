@@ -39,6 +39,107 @@ let settingsDebounceTimeout = null;
 let blockedUsers = [];
 let currentProfileUserId = null;
 
+// UI State Manager
+const uiState = {
+    menuOpen: false,
+    activeModal: null
+};
+
+// Unified Overlay Manager
+function showOverlay() {
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+    }
+}
+
+function hideOverlayIfUnused() {
+    if (!uiState.menuOpen && !uiState.activeModal) {
+        const overlay = document.getElementById('overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+    }
+}
+
+// Burger Menu Manager
+function openMenu() {
+    const menu = document.getElementById('profileMenu');
+    if (!menu) return;
+
+    uiState.menuOpen = true;
+    menu.classList.add('open');
+    showOverlay();
+}
+
+function closeMenu() {
+    const menu = document.getElementById('profileMenu');
+    if (!menu) return;
+
+    uiState.menuOpen = false;
+    menu.classList.remove('open');
+    hideOverlayIfUnused();
+}
+
+// Unified Modal Manager
+function openModal(modalId) {
+    if (!modalId) return;
+
+    // Close menu and any existing modal first
+    closeMenu();
+    closeModal();
+
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('Modal not found:', modalId);
+        return;
+    }
+
+    uiState.activeModal = modalId;
+    modal.classList.add('active');
+    showOverlay();
+}
+
+function closeModal() {
+    if (!uiState.activeModal) return;
+
+    const modal = document.getElementById(uiState.activeModal);
+    if (modal) {
+        modal.classList.remove('active');
+    }
+
+    uiState.activeModal = null;
+    hideOverlayIfUnused();
+}
+
+// Touch Swipe to Close Menu
+let touchStartX = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+});
+
+document.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diffX = touchStartX - touchEndX;
+
+    // Swipe left to close menu
+    if (diffX > 50 && uiState.menuOpen) {
+        closeMenu();
+    }
+});
+
+// Overlay Click Handler
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            closeMenu();
+            closeModal();
+        });
+    }
+});
+
 // Данные о локациях
 const locations = {
     cordon: {
@@ -1604,32 +1705,40 @@ function sendPrivateMessage() {
                 return;
             }
 
-            // Send message
-            return db.collection('privateChats')
-                .doc(currentPrivateChatId)
-                .collection('messages')
-                .add(messageData)
-                .then(() => {
-                    messageInput.value = '';
-                    lastMessageTime = now;
-
-                    // Reset typing status after sending message
-                    setTypingStatus(false);
-
-                    // Update chat document with last message and unread count
-                    const updateData = {
-                        lastMessage: message,
-                        lastSenderId: currentUser.uid,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    // Increment unread count for receiver, reset for sender
-                    updateData[`unreadCount.${receiverId}`] = firebase.firestore.FieldValue.increment(1);
-                    updateData[`unreadCount.${currentUser.uid}`] = 0;
-
+            // Check if receiver blocked current user (async check)
+            return db.collection('users').doc(receiverId).collection('blockedUsers').doc(currentUser.uid).get()
+                .then(blockDoc => {
+                    if (blockDoc.exists) {
+                        showSystemMessage('Пользователь вас заблокировал');
+                        return null;
+                    }
+                    // Not blocked, proceed to send message
                     return db.collection('privateChats')
                         .doc(currentPrivateChatId)
-                        .update(updateData);
+                        .collection('messages')
+                        .add(messageData)
+                        .then(() => {
+                            messageInput.value = '';
+                            lastMessageTime = now;
+
+                            // Reset typing status after sending message
+                            setTypingStatus(false);
+
+                            // Update chat document with last message and unread count
+                            const updateData = {
+                                lastMessage: message,
+                                lastSenderId: currentUser.uid,
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            };
+
+                            // Increment unread count for receiver, reset for sender
+                            updateData[`unreadCount.${receiverId}`] = firebase.firestore.FieldValue.increment(1);
+                            updateData[`unreadCount.${currentUser.uid}`] = 0;
+
+                            return db.collection('privateChats')
+                                .doc(currentPrivateChatId)
+                                .update(updateData);
+                        });
                 });
         })
         .catch(error => {
@@ -1640,6 +1749,11 @@ function sendPrivateMessage() {
 
 function handleSettingChange(settingKey, value) {
     if (!currentUser) return;
+
+    // Haptic feedback (if available)
+    if (navigator.vibrate) {
+        navigator.vibrate(10);
+    }
 
     // Clear existing debounce timeout
     if (settingsDebounceTimeout) {
@@ -1724,12 +1838,66 @@ function openUserProfileModal(userId) {
     if (idDisplay) idDisplay.textContent = `ID: ${userId}`;
 
     if (modal) modal.style.display = 'flex';
+
+    // Check if user is blocked
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).collection('blockedUsers').doc(userId).get()
+            .then(doc => {
+                updateBlockButton(doc.exists);
+            })
+            .catch(error => {
+                console.error('Error checking block status:', error);
+                updateBlockButton(false);
+            });
+    } else {
+        updateBlockButton(false);
+    }
 }
 
 function closeUserProfileModal() {
     const modal = document.getElementById('userProfileModal');
     if (modal) modal.style.display = 'none';
     currentProfileUserId = null;
+}
+
+function updateBlockButton(isBlocked) {
+    const btn = document.getElementById('blockBtn');
+    const btnText = document.getElementById('blockBtnText');
+    const btnIcon = btn ? btn.querySelector('.btn-icon') : null;
+
+    if (!btn || !btnText) return;
+
+    if (isBlocked) {
+        if (btnText) btnText.textContent = 'Разблокировать';
+        if (btnIcon) btnIcon.textContent = '✅';
+        btn.classList.add('unblock');
+    } else {
+        if (btnText) btnText.textContent = 'Заблокировать';
+        if (btnIcon) btnIcon.textContent = '🚫';
+        btn.classList.remove('unblock');
+    }
+}
+
+function unblockUser(userId) {
+    if (!userId || !currentUser) {
+        closeUserProfileModal();
+        return;
+    }
+
+    db.collection('users').doc(currentUser.uid).collection('blockedUsers').doc(userId).delete()
+        .then(() => {
+            // Remove from blockedUsers array
+            const index = blockedUsers.indexOf(userId);
+            if (index > -1) {
+                blockedUsers.splice(index, 1);
+            }
+            updateBlockButton(false);
+            showSystemMessage('Пользователь разблокирован');
+        })
+        .catch(error => {
+            console.error('Error unblocking user:', error);
+            showSystemMessage('Ошибка разблокировки пользователя');
+        });
 }
 
 function startChatFromProfile() {
@@ -1750,26 +1918,33 @@ function startChatFromProfile() {
 
 function blockUserFromProfile() {
     if (!currentProfileUserId || !currentUser) {
-        closeUserProfileModal();
         return;
     }
 
     if (currentProfileUserId === currentUser.uid) {
         showSystemMessage('Нельзя заблокировать самого себя');
-        closeUserProfileModal();
         return;
     }
 
-    db.collection('users').doc(currentUser.uid).collection('blockedUsers').doc(currentProfileUserId).set({
-        blockedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        blockedUsers.push(currentProfileUserId);
-        showSystemMessage('Пользователь заблокирован');
-        closeUserProfileModal();
-    }).catch(error => {
-        console.error('Error blocking user:', error);
-        showSystemMessage('Ошибка блокировки пользователя');
-    });
+    // Check if user is already blocked
+    const isBlocked = blockedUsers.includes(currentProfileUserId);
+
+    if (isBlocked) {
+        // Unblock
+        unblockUser(currentProfileUserId);
+    } else {
+        // Block
+        db.collection('users').doc(currentUser.uid).collection('blockedUsers').doc(currentProfileUserId).set({
+            blockedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            blockedUsers.push(currentProfileUserId);
+            updateBlockButton(true);
+            showSystemMessage('Пользователь заблокирован');
+        }).catch(error => {
+            console.error('Error blocking user:', error);
+            showSystemMessage('Ошибка блокировки пользователя');
+        });
+    }
 }
 
 function loadUserSettings() {
@@ -1886,15 +2061,78 @@ function addPrivateMessageToChat(message, messageId) {
 }
 
 function startPrivateChatWithUser(userId) {
-    if (!currentUser || userId === currentUser.uid) return;
+    if (!currentUser) {
+        console.error('startPrivateChatWithUser: No current user');
+        showSystemMessage('Необходимо авторизоваться');
+        return;
+    }
 
-    const chatId = getChatId(currentUser.uid, userId);
-    const otherUser = usersMap[userId];
-
-    if (!otherUser) {
+    if (!userId) {
+        console.error('startPrivateChatWithUser: No userId provided');
         showSystemMessage('Пользователь не найден');
         return;
     }
+
+    if (userId === currentUser.uid) {
+        console.error('startPrivateChatWithUser: Cannot chat with self');
+        showSystemMessage('Нельзя написать самому себе');
+        return;
+    }
+
+    console.log('startPrivateChatWithUser: userId =', userId);
+
+    // Form chatId with sorted IDs
+    const chatId = getChatId(currentUser.uid, userId);
+    console.log('startPrivateChatWithUser: chatId =', chatId);
+
+    // Try to get user from local map first
+    let otherUser = usersMap[userId];
+
+    // If not in local map, fetch from Firestore
+    if (!otherUser) {
+        console.log('startPrivateChatWithUser: User not in usersMap, fetching from Firestore');
+        db.collection('users').doc(userId).get()
+            .then(doc => {
+                if (!doc.exists) {
+                    console.error('startPrivateChatWithUser: User not found in Firestore');
+                    showSystemMessage('Пользователь не найден');
+                    return;
+                }
+
+                const userData = doc.data();
+                otherUser = {
+                    nickname: userData.nickname || 'Stalker',
+                    avatar: userData.avatar || '/images/default-avatar.png',
+                    role: userData.role || 'user',
+                    online: userData.online || false,
+                    lastSeen: userData.lastSeen || null,
+                    settings: userData.settings || {
+                        allowPrivateMessages: true,
+                        showOnlineStatus: true,
+                        readReceipts: true,
+                        showLastSeen: true,
+                        notificationsEnabled: true
+                    }
+                };
+
+                // Add to local map
+                usersMap[userId] = otherUser;
+
+                // Continue with chat creation
+                continueChatCreation(chatId, otherUser, userId);
+            })
+            .catch(error => {
+                console.error('startPrivateChatWithUser: Error fetching user:', error);
+                showSystemMessage('Ошибка загрузки пользователя');
+            });
+    } else {
+        // User found in local map, continue directly
+        continueChatCreation(chatId, otherUser, userId);
+    }
+}
+
+function continueChatCreation(chatId, otherUser, userId) {
+    console.log('continueChatCreation: Creating/opening chat', chatId);
 
     // Check if other user allows private messages
     if (otherUser.settings && otherUser.settings.allowPrivateMessages === false) {
@@ -1906,6 +2144,7 @@ function startPrivateChatWithUser(userId) {
     db.collection('privateChats').doc(chatId).get()
         .then(doc => {
             if (!doc.exists) {
+                console.log('continueChatCreation: Creating new chat');
                 // Create new chat with sorted users array
                 const users = [currentUser.uid, userId].sort();
                 db.collection('privateChats').doc(chatId).set({
@@ -1922,6 +2161,8 @@ function startPrivateChatWithUser(userId) {
                     },
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+            } else {
+                console.log('continueChatCreation: Chat already exists');
             }
 
             // Switch to private chat mode and open chat
@@ -1929,7 +2170,7 @@ function startPrivateChatWithUser(userId) {
             openPrivateChat(chatId, otherUser);
         })
         .catch(error => {
-            console.error('Ошибка создания личного чата:', error);
+            console.error('continueChatCreation: Error creating chat:', error);
             showSystemMessage('Ошибка создания чата');
         });
 }
@@ -1976,7 +2217,15 @@ function addMessageToChat(message) {
     nicknameSpan.className = 'message-nickname';
     nicknameSpan.textContent = userData.nickname;
     nicknameSpan.style.cursor = 'pointer';
-    nicknameSpan.onclick = () => openUserProfileModal(message.userId);
+    nicknameSpan.onclick = () => {
+        const targetUserId = message.userId || message.senderId;
+        console.log('Nickname clicked, userId:', targetUserId);
+        if (targetUserId) {
+            openUserProfileModal(targetUserId);
+        } else {
+            console.error('No userId found in message');
+        }
+    };
 
     if (userData.role === 'admin') {
         const adminBadge = document.createElement('span');
@@ -2168,83 +2417,39 @@ window.addEventListener('error', function(e) {
 
 // Функции профиля
 function toggleProfileDropdown() {
-    const profileSection = document.getElementById('profileSection');
-    const profileMenu = document.getElementById('profileMenu');
-
-    if (profileMenu.classList.contains('show')) {
-        profileMenu.classList.remove('show');
-        profileSection.classList.remove('active');
+    if (uiState.menuOpen) {
+        closeMenu();
     } else {
-        profileMenu.classList.add('show');
-        profileSection.classList.add('active');
+        openMenu();
     }
 }
 
-// Мобильное меню профиля
 function toggleMobileProfile() {
-    const profileSection = document.getElementById('profileSection');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-
-    if (profileSection.classList.contains('active')) {
-        profileSection.classList.remove('active');
-        if (mobileOverlay) mobileOverlay.classList.remove('active');
-    } else {
-        profileSection.classList.add('active');
-        if (mobileOverlay) mobileOverlay.classList.add('active');
-    }
+    closeMenu();
 }
-
-// Закрытие dropdown при клике вне его
-document.addEventListener('click', function(e) {
-    const profileSection = document.getElementById('profileSection');
-    const profileMenu = document.getElementById('profileMenu');
-    const mobileOverlay = document.getElementById('mobileOverlay');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-
-    // Закрытие мобильного drawer при клике на overlay
-    if (window.innerWidth <= 480 && mobileOverlay && e.target === mobileOverlay) {
-        if (profileSection.classList.contains('active')) {
-            toggleMobileProfile();
-        }
-        return;
-    }
-
-    // На мобильном не закрываем при клике вне (только по overlay или бургеру)
-    if (window.innerWidth <= 480) {
-        return;
-    }
-
-    // Закрытие dropdown на десктопе
-    if (!profileSection.contains(e.target)) {
-        profileMenu.classList.remove('show');
-        profileSection.classList.remove('active');
-    }
-});
 
 function openProfileSettings() {
-    switchSection('profile-settings');
-    toggleProfileDropdown();
+    openModal('profile-settings');
 }
 
 function openSettings() {
     loadUserSettings();
-    switchSection('profile-settings');
-    toggleProfileDropdown();
+    openModal('profile-settings');
 }
 
 function openSecurity() {
     showSystemMessage('Раздел "Безопасность" в разработке');
-    toggleProfileDropdown();
+    closeMenu();
 }
 
 function openMessages() {
     switchSection('chat');
-    toggleProfileDropdown();
+    closeMenu();
 }
 
 function openAchievements() {
     showSystemMessage('Раздел "Достижения" в разработке');
-    toggleProfileDropdown();
+    closeMenu();
 }
 
 // Настройки профиля

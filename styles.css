@@ -1143,8 +1143,8 @@ body {
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 26px;
+    width: 52px;
+    height: 30px;
 }
 
 .toggle-switch input {
@@ -1162,29 +1162,36 @@ body {
     bottom: 0;
     background-color: #0b0b0b;
     border: 2px solid #d4a017;
-    transition: 0.3s;
-    border-radius: 26px;
+    transition: 0.25s;
+    border-radius: 30px;
 }
 
 .toggle-slider:before {
     position: absolute;
     content: "";
-    height: 18px;
-    width: 18px;
+    height: 24px;
+    width: 24px;
     left: 2px;
     bottom: 2px;
     background-color: #d4a017;
-    transition: 0.3s;
+    transition: 0.25s;
     border-radius: 50%;
 }
 
 .toggle-switch input:checked + .toggle-slider {
-    background-color: #d4a017;
+    background-color: #4caf50;
+    border-color: #4caf50;
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
-    transform: translateX(24px);
+    transform: translateX(22px);
     background-color: #0b0b0b;
+}
+
+/* Increase clickable area for mobile */
+.toggle-switch {
+    padding: 10px;
+    margin: -10px;
 }
 
 /* User Profile Modal */
@@ -1320,8 +1327,76 @@ body {
     color: #fff;
 }
 
+.profile-modal-btn.block-btn.unblock {
+    border-color: #4caf50;
+}
+
+.profile-modal-btn.block-btn.unblock:hover {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: #fff;
+}
+
 .btn-icon {
     font-size: 20px;
+}
+
+/* Global Overlay */
+.global-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.global-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Burger Menu - Mobile Slide */
+.profile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100%;
+    background-color: #0b0b0b;
+    border-right: 2px solid #d4a017;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1001;
+    overflow-y: auto;
+}
+
+.profile-menu.open {
+    transform: translateX(0);
+}
+
+/* Mobile Close Button */
+.mobile-close-btn {
+    display: none;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #d4a017;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+@media (max-width: 768px) {
+    .mobile-close-btn {
+        display: block;
+    }
 }
 
 /* Private Chat View */
