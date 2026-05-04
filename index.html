@@ -48,8 +48,8 @@
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileProfile()" style="display: none;">☰</button>
 
             <!-- Профиль пользователя -->
-            <div class="profile-section" id="profileSection" style="display: none;">
-                <div class="profile-dropdown" onclick="toggleProfileDropdown()">
+            <div class="profile-section" id="profileSection">
+                <div class="profile-dropdown" onclick="handleProfileClick(event)">
                     <div class="profile-avatar">
                         <img src="/images/default-avatar.png" alt="Avatar" id="userAvatar">
                     </div>
@@ -78,6 +78,9 @@
                         </div>
                     </div>
 
+                    <!-- Кнопка закрытия меню -->
+                    <button class="profile-close-btn" onclick="event.stopPropagation(); setIsDropdownOpen(false)">✕</button>
+                    
                     <!-- Секция для неавторизованных пользователей -->
                     <div class="guest-auth-section" id="guestAuthSection" style="display: none;">
                         <div class="profile-nav">
@@ -86,7 +89,7 @@
                         </div>
                     </div>
 
-                    <div class="profile-nav" id="profileNav">
+                    <div class="profile-nav" id="profileNav" onclick="event.stopPropagation()">
                         <a href="#" class="profile-nav-item" onclick="openProfileSettings()">
                             <span class="nav-icon">👤</span>
                             <span>Профиль</span>

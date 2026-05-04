@@ -41,7 +41,7 @@ let currentProfileUserId = null;
 
 // UI State Manager
 const uiState = {
-    menuOpen: false,
+    isProfileOpen: false,
     activeModal: null
 };
 
@@ -54,7 +54,7 @@ function showOverlay() {
 }
 
 function hideOverlayIfUnused() {
-    if (!uiState.menuOpen && !uiState.activeModal) {
+    if (!uiState.isProfileOpen && !uiState.activeModal) {
         const overlay = document.getElementById('overlay');
         if (overlay) {
             overlay.classList.remove('active');
@@ -67,8 +67,9 @@ function openMenu() {
     const menu = document.getElementById('profileMenu');
     if (!menu) return;
 
-    uiState.menuOpen = true;
+    uiState.isProfileOpen = true;
     menu.classList.add('open');
+    document.body.classList.add('menu-open');
     showOverlay();
 }
 
@@ -76,9 +77,15 @@ function closeMenu() {
     const menu = document.getElementById('profileMenu');
     if (!menu) return;
 
-    uiState.menuOpen = false;
+    uiState.isProfileOpen = false;
     menu.classList.remove('open');
-    hideOverlayIfUnused();
+    document.body.classList.remove('menu-open');
+    
+    // Always hide overlay when closing dropdown menu
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
 }
 
 // Unified Modal Manager
@@ -124,7 +131,7 @@ document.addEventListener('touchend', (e) => {
     const diffX = touchStartX - touchEndX;
 
     // Swipe left to close menu
-    if (diffX > 50 && uiState.menuOpen) {
+    if (diffX > 50 && uiState.isProfileOpen) {
         closeMenu();
     }
 });
@@ -134,10 +141,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('overlay');
     if (overlay) {
         overlay.addEventListener('click', () => {
-            closeMenu();
+            setIsDropdownOpen(false);
             closeModal();
         });
     }
+    
+    // Outside click to close dropdown
+    document.addEventListener('click', (e) => {
+        const profileSection = document.getElementById('profileSection');
+        const profileMenu = document.getElementById('profileMenu');
+        
+        if (profileSection && profileMenu && 
+            !profileSection.contains(e.target) && 
+            !profileMenu.contains(e.target) &&
+            uiState.isProfileOpen) {
+            setIsDropdownOpen(false);
+        }
+    });
 });
 
 // Данные о локациях
@@ -2416,25 +2436,48 @@ window.addEventListener('error', function(e) {
 });
 
 // Функции профиля
+function handleProfileClick(e) {
+    e.stopPropagation(); // Предотвращаем "проваливание" клика
+    uiState.isProfileOpen = !uiState.isProfileOpen; // Строго переключение туда-сюда
+    
+    if (uiState.isProfileOpen) {
+        openMenu();
+    } else {
+        closeMenu();
+    }
+}
+
+function setIsDropdownOpen(isOpen) {
+    uiState.isProfileOpen = isOpen;
+    
+    if (isOpen) {
+        openMenu();
+    } else {
+        closeMenu();
+    }
+}
+
 function toggleProfileDropdown() {
-    if (uiState.menuOpen) {
+    handleProfileClick();
+}
+
+function toggleMobileProfile() {
+    if (uiState.isProfileOpen) {
         closeMenu();
     } else {
         openMenu();
     }
 }
 
-function toggleMobileProfile() {
-    closeMenu();
-}
-
 function openProfileSettings() {
-    openModal('profile-settings');
+    closeMenu();
+    switchSection('profile-settings');
 }
 
 function openSettings() {
+    closeMenu();
+    switchSection('profile-settings');
     loadUserSettings();
-    openModal('profile-settings');
 }
 
 function openSecurity() {
@@ -2581,6 +2624,8 @@ window.closeLocationModal = closeLocationModal;
 window.logout = logout;
 window.sendMessage = sendMessage;
 window.deleteMessage = deleteMessage;
+window.handleProfileClick = handleProfileClick;
+window.setIsDropdownOpen = setIsDropdownOpen;
 window.toggleProfileDropdown = toggleProfileDropdown;
 window.toggleMobileProfile = toggleMobileProfile;
 window.openProfileSettings = openProfileSettings;
